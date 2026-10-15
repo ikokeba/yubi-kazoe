@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ゆびでかぞえよう（試作）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* 絵本の机の上：あたたかい紙色の地に、大きなりんご。操作は保護者用の小さなバーに隔離 */
+:root{
+  --paper:#fbf6ec; --ink:#3b2f2a; --soft:#8a7a6f; --apple:#e2453b;
+  --leaf:#4f9a4a; --sun:#f3b63f; --card:#fffdf8; --line:#e8dccb;
+  --round:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--round);
+  padding:env(safe-area-inset-top,0) max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0) max(16px,env(safe-area-inset-left,0px));
+  -webkit-user-select:none;user-select:none;overflow:hidden;touch-action:manipulation}
+.app{height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px;max-width:1100px;margin:0 auto}
+.screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;min-height:0;text-align:center}
+h1{font-size:clamp(32px,6vw,56px);font-weight:900;margin:0;letter-spacing:.04em}
+h1 .r{color:var(--apple)}
+.note{max-width:34em;font-size:15px;line-height:1.8;color:var(--soft);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;text-align:left}
+.note b{color:var(--ink)}
+.big{font-family:var(--round);font-size:28px;font-weight:900;color:#fff;background:var(--apple);border:0;border-radius:999px;padding:18px 56px;box-shadow:0 6px 0 #b8322a;cursor:pointer}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #b8322a}
+.big:focus-visible,.chip:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+.err{color:var(--apple);font-size:15px;max-width:30em;line-height:1.7}
+.prompt{font-size:clamp(22px,4vw,34px);font-weight:700;margin:0}
+.apples{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:clamp(8px,2vw,20px);max-width:900px;min-height:30vh}
+.apple{font-size:clamp(56px,11vw,120px);line-height:1;transition:transform .25s,filter .25s}
+.apple.dim{filter:grayscale(.5) opacity(.45)}
+.apple.lit{transform:scale(1.25)}
+.plus{font-size:clamp(40px,7vw,72px);font-weight:900;color:var(--soft)}
+.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.cam{position:relative;width:min(38vw,240px);aspect-ratio:4/3;max-width:100%;border-radius:18px;overflow:hidden;background:#000;border:4px solid var(--card);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.cam canvas{width:100%;height:100%;display:block}
+.count{display:flex;flex-direction:column;align-items:center;gap:4px}
+.count .n{font-size:clamp(48px,8vw,80px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;min-width:1.2em;text-align:center}
+.count .lbl{font-size:13px;color:var(--soft)}
+.hold{width:120px;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.hold i{display:block;height:100%;width:0;background:var(--leaf);transition:width .1s linear}
+.hanamaru{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.hanamaru div{font-size:clamp(120px,30vw,260px);animation:pop .6s ease-out}
+@keyframes pop{0%{transform:scale(.2) rotate(-30deg);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.hanamaru div{animation:none}.apple{transition:none}}
+.parent{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--soft);border-top:1px dashed var(--line);padding-top:10px}
+.chip{font-family:var(--round);font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.stars{font-size:22px;letter-spacing:4px;min-height:1.2em}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <section class="screen" id="start">
+    <h1>ゆびで かぞえよう <span class="r">🍎</span></h1>
+    <div class="note">
+      <b>おうちのかたへ（試作版）</b><br>
+      カメラで手の形を読み取って、立てた指の数を数えます。<b>カメラの映像は端末の中だけで処理し、送信も保存もしません。</b>
+      ※試作版のため、手を見つけるプログラムはインターネットから読み込みます（初回のみ数MB）。<br>
+      タブレットを立てて、お子さんの手がカメラに映るようにしてください。
+    </div>
+    <button class="big" id="go">はじめる</button>
+    <div class="err" id="err" hidden></div>
+  </section>
+
+  <section class="screen" id="game" hidden>
+    <div class="stars" id="stars" aria-label="正解の数"></div>
+    <p class="prompt" id="prompt">りんごは いくつ？</p>
+    <div class="apples" id="apples"></div>
+  </section>
+
+  <section class="screen" id="done" hidden>
+    <h1>よく できました！</h1>
+    <div style="font-size:120px">💮</div>
+    <button class="big" id="again">もういちど</button>
+  </section>
+
+  <div class="bottom" id="bottom" hidden>
+    <div class="cam"><canvas id="view" width="320" height="240"></canvas></div>
+    <div class="count">
+      <span class="n" id="n">–</span>
+      <span class="lbl">いま みせている ゆび</span>
+      <div class="hold"><i id="hold"></i></div>
+    </div>
+  </div>
+
+  <div class="parent" id="parent" hidden>
+    <span>おうちのかた用：</span>
+    <button class="chip" data-stage="0" aria-pressed="true">1〜3</button>
+    <button class="chip" data-stage="1" aria-pressed="false">4〜5</button>
+    <button class="chip" data-stage="2" aria-pressed="false">6〜10</button>
+    <button class="chip" data-stage="3" aria-pressed="false">たしざん</button>
+    <button class="chip" id="skip">つぎの もんだい</button>
+    <button class="chip" id="mute" aria-pressed="false">おと けす</button>
+  </div>
+</div>
+
+<video id="video" playsinline muted hidden></video>
+<div class="hanamaru" id="maru" hidden><div>💮</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const STAGES = [
+    {min:1,max:3}, {min:4,max:5}, {min:6,max:10}, {add:true}
+  ];
+  const PER_STAGE = 3;          // 各段階の正解数
+  const HOLD_MS = 1000;         // 同じ本数を保つ時間
+  const HINT_MS = 3000;         // ヒントまでの時間
+  const NUM = ['ぜろ','いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう'];
+
+  let stage = 0, correctInStage = 0, target = 0, parts = null;
+  let busy = false, muted = false;
+  let shown = null, shownSince = 0, wrongSince = 0, hinted = false;
+  let hands = null, stream = null;
+
+  // ---------- 音 ----------
+  let ac = null;
+  function chime(){
+    if (muted) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      [523, 659, 784, 1047].forEach((f, i) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.frequency.value = f; o.type = 'triangle';
+        g.gain.setValueAtTime(0.0001, ac.currentTime + i*0.09);
+        g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + i*0.09 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + i*0.09 + 0.35);
+        o.connect(g).connect(ac.destination);
+        o.start(ac.currentTime + i*0.09); o.stop(ac.currentTime + i*0.09 + 0.4);
+      });
+    } catch(e) {}
+  }
+  function say(text){
+    if (muted || !('speechSynthesis' in window)) return Promise.resolve();
+    return new Promise(res => {
+      try {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ja-JP'; u.rate = 0.9; u.pitch = 1.2;
+        u.onend = u.onerror = () => res();
+        speechSynthesis.speak(u);
+        setTimeout(res, 4000);
+      } catch(e){ res(); }
+    });
+  }
+
+  // ---------- 指を数える ----------
+  const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  function countFingers(lm){
+    let c = 0;
+    // 人差し指〜小指：手首から指先が、第2関節より十分遠ければ「立っている」
+    [[8,6],[12,10],[16,14],[20,18]].forEach(([tip, pip]) => {
+      if (d(lm[0], lm[tip]) > d(lm[0], lm[pip]) * 1.15) c++;
+    });
+    // 親指：指先が人差し指の付け根から離れていて、手のひら中央より外側にあれば「立っている」
+    const palmW = d(lm[5], lm[17]);
+    if (d(lm[4], lm[5]) > palmW * 0.6 && d(lm[4], lm[13]) > d(lm[3], lm[13])) c++;
+    return c;
+  }
+
+  // ---------- 出題 ----------
+  const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  function newQuestion(){
+    const s = STAGES[stage];
+    let t;
+    if (s.add){
+      const a = rnd(1, 3), b = rnd(1, Math.min(3, 5 - a));
+      parts = [a, b]; t = a + b;
+    } else {
+      parts = null;
+      do { t = rnd(s.min, s.max); } while (t === target && s.max > s.min);
+    }
+    target = t; hinted = false; wrongSince = 0;
+    renderApples();
+    renderStars();
+    const q = parts ? `りんごが ${NUM[parts[0]]}こ と ${NUM[parts[1]]}こ。ぜんぶで いくつ？ ゆびで みせてね`
+                    : 'りんごは いくつ？ ゆびで みせてね';
+    $('prompt').textContent = parts ? 'ぜんぶで いくつ？' : 'りんごは いくつ？';
+    say(q);
+  }
+  function renderApples(){
+    const box = $('apples'); box.innerHTML = '';
+    const make = () => { const s = document.createElement('span'); s.className = 'apple'; s.textContent = '🍎'; return s; };
+    if (parts){
+      for (let i = 0; i < parts[0]; i++) box.appendChild(make());
+      const p = document.createElement('span'); p.className = 'plus'; p.textContent = 'と'; box.appendChild(p);
+      for (let i = 0; i < parts[1]; i++) box.appendChild(make());
+    } else {
+      for (let i = 0; i < target; i++) box.appendChild(make());
+    }
+  }
+  function renderStars(){ $('stars').textContent = '⭐'.repeat(correctInStage) + '・'.repeat(PER_STAGE - correctInStage); }
+
+  async function hint(){
+    hinted = true; busy = true;
+    const apples = [...document.querySelectorAll('.apple')];
+    apples.forEach(a => a.classList.add('dim'));
+    await say('いっしょに かぞえよう');
+    for (let i = 0; i < apples.length; i++){
+      apples[i].classList.remove('dim'); apples[i].classList.add('lit');
+      await say(NUM[i + 1]);
+      apples[i].classList.remove('lit');
+    }
+    await say(`${NUM[target]}こ だね`);
+    busy = false; shownSince = performance.now(); wrongSince = 0;
+  }
+
+  async function correct(){
+    busy = true;
+    chime();
+    $('maru').hidden = false;
+    correctInStage++;
+    renderStars();
+    await say(`せいかい！ ${NUM[target]}こ！`);
+    $('maru').hidden = true;
+    if (correctInStage >= PER_STAGE){
+      if (stage < STAGES.length - 1){ setStage(stage + 1); await say('つぎの もんだいに すすむよ'); }
+      else { finish(); busy = false; return; }
+    }
+    newQuestion();
+    busy = false; shown = null;
+  }
+
+  function finish(){
+    $('game').hidden = true; $('done').hidden = false;
+    say('よく できました！');
+  }
+
+  function setStage(i){
+    stage = i; correctInStage = 0;
+    document.querySelectorAll('[data-stage]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.stage === i)));
+    if (hands) hands.setOptions({ maxNumHands: i >= 2 ? 2 : 1 });
+  }
+
+  // ---------- 判定 ----------
+  function onCount(n){
+    $('n').textContent = n == null ? '–' : n;
+    const now = performance.now();
+    if (n !== shown){ shown = n; shownSince = now; }
+    const held = n == null ? 0 : Math.min(1, (now - shownSince) / HOLD_MS);
+    $('hold').style.width = (held * 100) + '%';
+    if (busy || n == null || $('game').hidden) return;
+    if (n === target && held >= 1){ correct(); return; }
+    if (n !== target && n > 0){
+      if (!wrongSince) wrongSince = now;
+      if (!hinted && now - wrongSince > HINT_MS) hint();
+    } else wrongSince = 0;
+  }
+
+  // ---------- カメラと検出 ----------
+  const view = $('view'), ctx = view.getContext('2d');
+  function draw(results){
+    ctx.save();
+    ctx.clearRect(0, 0, view.width, view.height);
+    ctx.translate(view.width, 0); ctx.scale(-1, 1);   // 鏡のように左右反転
+    ctx.drawImage(results.image, 0, 0, view.width, view.height);
+    ctx.fillStyle = '#f3b63f';
+    (results.multiHandLandmarks || []).forEach(lm => lm.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x * view.width, p.y * view.height, 3, 0, Math.PI * 2); ctx.fill();
+    }));
+    ctx.restore();
+  }
+
+  async function start(){
+    $('err').hidden = true;
+    say('');  // iPad では最初のタップ中に音声を有効にする
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume && ac.resume(); } catch(e){}
+    if (!window.isSecureContext){ return fail('カメラは https のページでしか使えません。https で公開したURLから開いてください。'); }
+    if (!window.Hands){ return fail('手を見つけるプログラムを読み込めませんでした。インターネットにつながっているか確かめてください。'); }
+    $('go').disabled = true; $('go').textContent = 'じゅんびちゅう…';
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    } catch(e){
+      $('go').disabled = false; $('go').textContent = 'はじめる';
+      return fail('カメラを使えませんでした。ブラウザの設定でカメラを「許可」にしてから、もう一度押してください。');
+    }
+    const video = $('video');
+    video.srcObject = stream; await video.play();
+    hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${f}` });
+    hands.setOptions({ maxNumHands: stage >= 2 ? 2 : 1, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+    hands.onResults(r => {
+      draw(r);
+      const list = r.multiHandLandmarks || [];
+      onCount(list.length ? list.reduce((s, lm) => s + countFingers(lm), 0) : null);
+    });
+    await hands.initialize();
+    $('start').hidden = true; $('game').hidden = false; $('bottom').hidden = false; $('parent').hidden = false;
+    newQuestion();
+    const loop = async () => {
+      if (video.readyState >= 2){ try { await hands.send({ image: video }); } catch(e){} }
+      requestAnimationFrame(loop);
+    };
+    loop();
+  }
+  function fail(msg){ $('err').textContent = msg; $('err').hidden = false; }
+
+  $('go').addEventListener('click', start);
+  $('again').addEventListener('click', () => { setStage(0); $('done').hidden = true; $('game').hidden = false; newQuestion(); });
+  $('skip').addEventListener('click', () => { if (!busy) newQuestion(); });
+  $('mute').addEventListener('click', e => { muted = !muted; e.currentTarget.setAttribute('aria-pressed', String(muted)); if (muted && 'speechSynthesis' in window) speechSynthesis.cancel(); });
+  document.querySelectorAll('[data-stage]').forEach(b => b.addEventListener('click', () => { if (busy) return; setStage(+b.dataset.stage); newQuestion(); }));
+})();
+</script>
+</body>
+</html>
