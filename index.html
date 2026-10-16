@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>ゆびでかぞえよう（試作）</title>
+<title>ゆびでかぞえよう 試作v4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -37,6 +37,8 @@ h1 .r{color:var(--apple)}
 .plus{font-size:clamp(40px,7vw,72px);font-weight:900;color:var(--soft)}
 .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .cam{position:relative;height:min(28vh,240px);width:auto;aspect-ratio:4/3;max-width:50vw;border-radius:18px;overflow:hidden;background:#000;border:4px solid var(--card);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.cam.big{height:min(62vh,640px);max-width:calc(100vw - 32px)}
+.bottom:has(.cam.big){flex-direction:column;align-items:center}
 .cam canvas{width:100%;height:100%;display:block}
 .count{display:flex;flex-direction:column;align-items:center;gap:4px}
 .count .n{font-size:clamp(48px,8vw,80px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;min-width:1.2em;text-align:center}
@@ -58,6 +60,7 @@ h1 .r{color:var(--apple)}
 
   <section class="screen" id="start">
     <h1>ゆびで かぞえよう <span class="r">🍎</span></h1>
+    <div class="note" style="text-align:center;padding:6px 14px">試作 v4</div>
     <div class="note">
       <b>おうちのかたへ（試作版）</b><br>
       カメラで手の形を読み取って、立てた指の数を数えます。<b>カメラの映像は端末の中だけで処理し、送信も保存もしません。</b>
@@ -85,6 +88,7 @@ h1 .r{color:var(--apple)}
     <div class="count">
       <span class="n" id="n">–</span>
       <span class="lbl">いま みせている ゆび</span>
+      <span id="dbg" style="font-size:18px;font-weight:700;letter-spacing:.15em;min-height:1.3em"></span>
       <div class="hold"><i id="hold"></i></div>
     </div>
   </div>
@@ -97,7 +101,9 @@ h1 .r{color:var(--apple)}
     <button class="chip" data-stage="3" aria-pressed="false">たしざん</button>
     <button class="chip" id="skip">つぎの もんだい</button>
     <button class="chip" id="mute" aria-pressed="false">おと けす</button>
-    <span id="dbg" style="font-variant-numeric:tabular-nums;letter-spacing:.1em"></span>
+    <button class="chip" id="camBig" aria-pressed="false">カメラを おおきく</button>
+    <button class="chip" id="dbgBtn" aria-pressed="true">デバッグ表示</button>
+    <span style="margin-left:auto">試作 v4</span>
   </div>
 </div>
 
@@ -168,14 +174,18 @@ h1 .r{color:var(--apple)}
   function fingerFlags(raw){
     const lm = raw.map(P);
     // 人差し指〜小指：付け根→第2関節→第1関節→指先がほぼ一直線なら「立っている」
-    const long = [[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]].map(([m, p, dd, t]) =>
-      straight(lm[m], lm[p], lm[dd]) > 0.8 && straight(lm[p], lm[dd], lm[t]) > 0.7 &&
-      d(lm[0], lm[t]) > d(lm[0], lm[p]));
+    const long = [[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]].map(([m, p, dd, t]) => {
+      const a = straight(lm[m], lm[p], lm[dd]), b = straight(lm[p], lm[dd], lm[t]);
+      const far = d(lm[0], lm[t]) / d(lm[0], lm[p]);
+      return { on: a > 0.8 && b > 0.7 && far > 1, a, b, far, tip: raw[t] };
+    });
     // 親指：まっすぐ伸びていて、指先が人差し指の付け根から手のひら幅の8割以上離れている
     const palmW = d(lm[5], lm[17]);
-    const thumb = straight(lm[2], lm[3], lm[4]) > 0.85 && d(lm[4], lm[5]) > palmW * 0.8 && d(lm[4], lm[17]) > palmW * 1.3;
+    const a = straight(lm[2], lm[3], lm[4]), r1 = d(lm[4], lm[5]) / palmW, r2 = d(lm[4], lm[17]) / palmW;
+    const thumb = { on: a > 0.8 && r1 > 0.8 && r2 > 1.3, a, b: r1, far: r2, tip: raw[4] };
     return [thumb, ...long];
   }
+  let debugOn = true, lastInfo = [], lastScore = [], fps = 0, fpsT = performance.now(), fpsN = 0;
   // 数フレームの多数決で、ちらつきを抑える
   const recent = [];
   function smooth(n){
@@ -289,11 +299,38 @@ h1 .r{color:var(--apple)}
     ctx.clearRect(0, 0, view.width, view.height);
     ctx.translate(view.width, 0); ctx.scale(-1, 1);   // 鏡のように左右反転
     ctx.drawImage(results.image, 0, 0, view.width, view.height);
-    ctx.fillStyle = '#f3b63f';
-    (results.multiHandLandmarks || []).forEach(lm => lm.forEach(p => {
-      ctx.beginPath(); ctx.arc(p.x * view.width, p.y * view.height, 3, 0, Math.PI * 2); ctx.fill();
-    }));
+    const W = view.width, H = view.height;
+    const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
+    (results.multiHandLandmarks || []).forEach((lm, h) => {
+      ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2;
+      BONES.forEach(([i, j]) => { ctx.beginPath(); ctx.moveTo(lm[i].x * W, lm[i].y * H); ctx.lineTo(lm[j].x * W, lm[j].y * H); ctx.stroke(); });
+      const info = lastInfo[h] || [];
+      lm.forEach((p, i) => {
+        const f = [4, 8, 12, 16, 20].indexOf(i);
+        ctx.fillStyle = f < 0 ? '#f3b63f' : (info[f] && info[f].on ? '#2ecc40' : '#ff3b30');
+        ctx.beginPath(); ctx.arc(p.x * W, p.y * H, f < 0 ? 3 : 7, 0, Math.PI * 2); ctx.fill();
+      });
+    });
     ctx.restore();
+    if (!debugOn) return;
+    // 文字は反転させずに描く（x は鏡写し）
+    const fs = Math.max(11, Math.round(W / 26));
+    ctx.font = `bold ${fs}px sans-serif`; ctx.textBaseline = 'top';
+    const lines = [];
+    const hs = results.multiHandLandmarks || [];
+    lines.push(`v4  ${imgW}x${imgH}  ${fps}fps  手:${hs.length}` + (lastScore.length ? `  確信度:${lastScore.map(s => s.toFixed(2)).join(',')}` : ''));
+    if (!hs.length) lines.push('手が みつかりません');
+    lastInfo.forEach((info, h) => info.forEach((f, i) => {
+      lines.push(`${'親人中薬小'[i]} ${f.on ? '○' : '×'}  a${f.a.toFixed(2)} b${f.b.toFixed(2)} r${f.far.toFixed(2)}`);
+    }));
+    const lh = fs + 3;
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, 0, W, lh * lines.length + 6);
+    ctx.fillStyle = '#fff';
+    lines.forEach((t, i) => ctx.fillText(t, 4, 3 + i * lh));
+    lastInfo.forEach((info, h) => info.forEach((f, i) => {
+      ctx.fillStyle = f.on ? '#2ecc40' : '#ff3b30';
+      ctx.fillText('親人中薬小'[i], (1 - f.tip.x) * W + 8, f.tip.y * H - fs / 2);
+    }));
   }
 
   async function start(){
@@ -312,14 +349,19 @@ h1 .r{color:var(--apple)}
     const video = $('video');
     video.srcObject = stream; await video.play();
     hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${f}` });
-    hands.setOptions({ maxNumHands: stage >= 2 ? 2 : 1, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+    hands.setOptions({ maxNumHands: stage >= 2 ? 2 : 1, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
     hands.onResults(r => {
-      draw(r);
+      fpsN++; const t = performance.now(); if (t - fpsT > 1000){ fps = fpsN; fpsN = 0; fpsT = t; }
       const list = r.multiHandLandmarks || [];
+      lastScore = (r.multiHandedness || []).map(h => h.score);
+      // 先に寸法を合わせてから判定する
+      const iw = r.image.width || r.image.videoWidth, ih = r.image.height || r.image.videoHeight;
+      if (iw && ih){ imgW = iw; imgH = ih; }
+      lastInfo = list.map(fingerFlags);
+      draw(r);
       if (!list.length){ recent.length = 0; $('dbg').textContent = ''; onCount(null); return; }
-      const flags = list.map(fingerFlags);
-      $('dbg').textContent = flags.map(f => '親人中薬小'.split('').map((c, i) => f[i] ? c : '・').join('')).join(' / ');
-      onCount(smooth(flags.flat().filter(Boolean).length));
+      $('dbg').textContent = lastInfo.map(f => '親人中薬小'.split('').map((c, i) => f[i].on ? c : '・').join('')).join(' / ');
+      onCount(smooth(lastInfo.flat().filter(f => f.on).length));
     });
     await hands.initialize();
     $('start').hidden = true; $('game').hidden = false; $('bottom').hidden = false; $('parent').hidden = false;
@@ -333,6 +375,12 @@ h1 .r{color:var(--apple)}
   function fail(msg){ $('err').textContent = msg; $('err').hidden = false; }
 
   $('go').addEventListener('click', start);
+  $('camBig').addEventListener('click', e => {
+    const big = document.querySelector('.cam').classList.toggle('big');
+    e.currentTarget.setAttribute('aria-pressed', String(big));
+    $('game').hidden = big && !$('start').hidden ? $('game').hidden : big;   // 大きく表示中はゲーム画面を隠す
+  });
+  $('dbgBtn').addEventListener('click', e => { debugOn = !debugOn; e.currentTarget.setAttribute('aria-pressed', String(debugOn)); });
   $('again').addEventListener('click', () => { setStage(0); $('done').hidden = true; $('game').hidden = false; newQuestion(); });
   $('skip').addEventListener('click', () => { if (!busy) newQuestion(); });
   $('mute').addEventListener('click', e => { muted = !muted; e.currentTarget.setAttribute('aria-pressed', String(muted)); if (muted && 'speechSynthesis' in window) speechSynthesis.cancel(); });
