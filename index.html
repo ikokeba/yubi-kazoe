@@ -3,110 +3,254 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>ゆびでかぞえよう 試作v5</title>
+<title>ゆびでかぞえよう 試作v7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-/* 絵本の机の上：あたたかい紙色の地に、大きなりんご。操作は保護者用の小さなバーに隔離 */
+/* 絵本の机：紙色の地に「10のわく（5×2のます）」でりんごを並べる。
+   縦長はうえ＝もんだい／した＝かがみ、横長はひだり＝もんだい／みぎ＝かがみ。
+   おうちのかた用の操作は、右上のボタンから開く引き出しにしまう。 */
 :root{
-  --paper:#fbf6ec; --ink:#3b2f2a; --soft:#8a7a6f; --apple:#e2453b;
-  --leaf:#4f9a4a; --sun:#f3b63f; --card:#fffdf8; --line:#e8dccb;
+  color-scheme: light;
+  --paper:#fbf5ea; --card:#fffdf7; --ink:#3b2f2a; --soft:#857466; --line:#eadfcd;
+  --apple:#e2453b; --apple-dk:#b8322a; --leaf:#4f9a4a; --sun:#f3b63f; --cell:#f6ecdb;
   --round:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;
+  --gap:clamp(10px, 1.6vmin, 20px);
+  --radius:clamp(18px, 3vmin, 32px);
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
-body{background:var(--paper);color:var(--ink);font-family:var(--round);
-  padding:env(safe-area-inset-top,0) max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0) max(16px,env(safe-area-inset-left,0px));
-  -webkit-user-select:none;user-select:none;overflow:hidden;touch-action:manipulation}
-.app{height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px;max-width:1100px;margin:0 auto}
-.screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;min-height:0;text-align:center}
-h1{font-size:clamp(32px,6vw,56px);font-weight:900;margin:0;letter-spacing:.04em}
-h1 .r{color:var(--apple)}
-.note{max-width:34em;font-size:15px;line-height:1.8;color:var(--soft);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;text-align:left}
+body{background:var(--paper);color:var(--ink);font-family:var(--round);font-weight:500;
+  -webkit-user-select:none;user-select:none;overflow:hidden;touch-action:manipulation;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+button{font-family:inherit;color:inherit}
+button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+
+/* ---------- 全画面パネル（はじめ・おわり） ---------- */
+.screen{position:fixed;inset:0;z-index:5;background:var(--paper);overflow:auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(16px,3vmin,32px);
+  padding-block:max(24px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-bottom,0px));
+  padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));text-align:center}
+.title{margin:0;font-weight:900;font-size:clamp(34px,7.5vmin,76px);line-height:1.15;letter-spacing:.04em;text-wrap:balance}
+.title em{font-style:normal;color:var(--apple)}
+.demo{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px;background:var(--card);border:2px solid var(--line);border-radius:16px;width:min(320px,80vw)}
+.demo span{aspect-ratio:1;border-radius:10px;background:var(--cell);display:grid;place-items:center;font-size:clamp(26px,6vmin,40px)}
+.note{max-width:36em;font-size:clamp(14px,1.9vmin,17px);line-height:1.85;color:var(--soft);background:var(--card);
+  border:1px solid var(--line);border-radius:16px;padding:14px 18px;text-align:left}
 .note b{color:var(--ink)}
-.big{font-family:var(--round);font-size:28px;font-weight:900;color:#fff;background:var(--apple);border:0;border-radius:999px;padding:18px 56px;box-shadow:0 6px 0 #b8322a;cursor:pointer}
-.big:active{transform:translateY(4px);box-shadow:0 2px 0 #b8322a}
-.big:focus-visible,.chip:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
-.err{color:var(--apple);font-size:15px;max-width:30em;line-height:1.7}
-.prompt{font-size:clamp(22px,4vw,34px);font-weight:700;margin:0}
-.apples{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:clamp(8px,2vw,20px);max-width:900px;min-height:30vh}
-.apple{font-size:clamp(56px,11vw,120px);line-height:1;transition:transform .25s,filter .25s}
-.apple.dim{filter:grayscale(.5) opacity(.45)}
-.apple.lit{transform:scale(1.25)}
-.plus{font-size:clamp(40px,7vw,72px);font-weight:900;color:var(--soft)}
-.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.cam{position:relative;height:min(28vh,240px);width:auto;aspect-ratio:4/3;max-width:50vw;border-radius:18px;overflow:hidden;background:#000;border:4px solid var(--card);box-shadow:0 2px 10px rgba(0,0,0,.12)}
-.cam.big{height:min(62vh,640px);max-width:calc(100vw - 32px)}
-.bottom:has(.cam.big){flex-direction:column;align-items:center}
-.cam canvas{width:100%;height:100%;display:block}
-.count{display:flex;flex-direction:column;align-items:center;gap:4px}
-.count .n{font-size:clamp(48px,8vw,80px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;min-width:1.2em;text-align:center}
-.count .lbl{font-size:13px;color:var(--soft)}
-.hold{width:120px;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
-.hold i{display:block;height:100%;width:0;background:var(--leaf);transition:width .1s linear}
-.hanamaru{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.hanamaru div{font-size:clamp(120px,30vw,260px);animation:pop .6s ease-out}
+.big{font-size:clamp(24px,4vmin,34px);font-weight:900;color:#fff;background:var(--apple);border:0;border-radius:999px;
+  padding:.6em 2.2em;box-shadow:0 6px 0 var(--apple-dk);cursor:pointer}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 var(--apple-dk)}
+.big:disabled{opacity:.7}
+.err{color:var(--apple);font-size:15px;max-width:32em;line-height:1.7}
+.ver{font-size:13px;color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 12px}
+
+/* ---------- あそぶ画面 ---------- */
+.app{height:100%;max-width:1500px;margin:0 auto;display:grid;gap:var(--gap);
+  padding-block:var(--gap);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  grid-template-areas:"top" "stage" "mirror";
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto}
+@media (orientation:landscape) and (min-width:640px){
+  .app{grid-template-areas:"top top" "stage mirror";
+    grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+}
+
+.top{grid-area:top;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.progress{display:flex;align-items:center;gap:clamp(8px,1.4vmin,14px)}
+.level{font-size:clamp(14px,2vmin,18px);font-weight:700;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 14px;white-space:nowrap}
+.dots{display:flex;gap:6px}
+.dots i{width:clamp(16px,2.6vmin,26px);aspect-ratio:1;border-radius:50%;background:var(--line);transition:background .3s,transform .3s}
+.dots i.on{background:var(--sun);transform:scale(1.12)}
+.gear{min-height:44px;font-size:clamp(13px,1.8vmin,16px);font-weight:700;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:6px 16px;cursor:pointer;white-space:nowrap}
+
+.stage{grid-area:stage;min-height:0;container-type:size;background:var(--card);border:2px solid var(--line);border-radius:var(--radius);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,4cqh,36px);padding:clamp(12px,3cqmin,32px);overflow:hidden}
+.prompt{margin:0;font-weight:900;font-size:clamp(22px,9cqmin,64px);line-height:1.2;text-align:center;text-wrap:balance}
+.frames{display:flex;align-items:center;justify-content:center;gap:clamp(8px,3cqw,28px);flex-wrap:nowrap;max-width:100%}
+/* 10のわく：5こで1れつ。ますの大きさはステージの幅と高さの両方からきめる */
+.frame{--c:min(15vw,12dvh);display:grid;grid-template-columns:repeat(5,var(--c));grid-auto-rows:var(--c);gap:calc(var(--c)*.1);
+  padding:calc(var(--c)*.12);background:var(--paper);border:2px solid var(--line);border-radius:calc(var(--c)*.3)}
+@supports (container-type:size){
+  .frame{--c:min(15.5cqw, 52cqh)}
+  .frame.ten{--c:min(15.5cqw, 27cqh)}
+}
+.cell{border-radius:calc(var(--c)*.22);background:var(--cell);display:grid;place-items:center}
+.cell:nth-child(5n+1):not(:first-child){}
+.apple{font-size:calc(var(--c)*.7);line-height:1;transition:transform .25s,filter .25s,opacity .25s}
+.apple.dim{filter:grayscale(.6);opacity:.4}
+.apple.lit{transform:scale(1.22)}
+.join{font-weight:900;font-size:clamp(22px,7cqmin,48px);color:var(--soft)}
+
+.mirror{grid-area:mirror;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vmin,32px)}
+.cam{position:relative;height:clamp(150px,31dvh,480px);width:auto;max-width:56vw;aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:#2a2320;
+  border:clamp(3px,.6vmin,6px) solid var(--card);box-shadow:0 2px 14px rgba(59,47,42,.14)}
+.cam canvas{width:100%;height:100%;display:block;object-fit:cover}
+.cam .wait{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:14px}
+.count{display:grid;justify-items:center;gap:clamp(6px,1.2vmin,12px)}
+.ring{--p:0;width:clamp(96px,16dvh,190px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--leaf) calc(var(--p)*1%), var(--line) 0)}
+.ring b{width:84%;aspect-ratio:1;border-radius:50%;background:var(--card);display:grid;place-items:center;
+  font-weight:900;font-size:clamp(44px,8dvh,92px);line-height:1;font-variant-numeric:tabular-nums}
+.fingers{display:flex;gap:10px}
+.fingers span{display:flex;gap:3px}
+.fingers i{width:clamp(9px,1.4vmin,14px);height:clamp(16px,2.4vmin,24px);border-radius:6px;background:var(--line);transition:background .15s}
+.fingers i.on{background:var(--leaf)}
+.lbl{font-size:clamp(12px,1.7vmin,15px);color:var(--soft)}
+.dbgline{font-size:15px;font-weight:700;letter-spacing:.12em;min-height:1.2em}
+body:not(.debug) .dbgline{display:none}
+
+/* 横長：かがみを右のはしらに縦にならべる */
+@media (orientation:landscape) and (min-width:640px){
+  .mirror{flex-direction:column;justify-content:center}
+  .cam{height:auto;width:100%;max-width:100%;max-height:calc(100dvh - 330px);min-height:120px}
+  .ring{width:clamp(84px,17dvh,170px)}
+  .ring b{font-size:clamp(40px,9dvh,92px)}
+}
+/* 横長で背が低い（スマホを横にした時） */
+@media (orientation:landscape) and (max-height:520px){
+  .mirror{flex-direction:row}
+  .cam{height:calc(100dvh - 110px);width:auto;max-width:60%;max-height:none}
+  .count .lbl{display:none}
+}
+/* 縦長のせまい画面では、かがみの数字を少しちいさく */
+@media (orientation:portrait) and (max-width:430px){
+  .mirror{justify-content:space-between}
+  .cam{max-width:52vw}
+}
+/* カメラを大きく（おうちのかた用） */
+body.cam-large .stage{display:none}
+body.cam-large .app{grid-template-areas:"top" "mirror";grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr)}
+body.cam-large .mirror{flex-direction:column}
+body.cam-large .cam{height:auto;width:auto;max-width:100%;max-height:calc(100dvh - 300px)}
+
+/* ---------- はなまる ---------- */
+.hanamaru{position:fixed;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.hanamaru div{font-size:clamp(140px,40vmin,340px);animation:pop .6s ease-out}
 @keyframes pop{0%{transform:scale(.2) rotate(-30deg);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1)}}
-@media (prefers-reduced-motion:reduce){.hanamaru div{animation:none}.apple{transition:none}}
-.parent{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--soft);border-top:1px dashed var(--line);padding-top:10px}
-.chip{font-family:var(--round);font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.hanamaru div{animation:none}.apple,.dots i{transition:none}}
+
+/* ---------- おうちのかた用の引き出し ---------- */
+.shade{position:fixed;inset:0;z-index:9;background:rgba(59,47,42,.32)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--card);border-top:2px solid var(--line);
+  border-radius:24px 24px 0 0;box-shadow:0 -6px 24px rgba(59,47,42,.18);max-height:80dvh;overflow:auto;
+  padding-block:18px calc(18px + env(safe-area-inset-bottom,0px));
+  padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.sheet-in{max-width:640px;margin:0 auto;display:grid;gap:16px}
+.sheet h2{margin:0;font-size:18px;font-weight:900;display:flex;justify-content:space-between;align-items:center}
+.group{display:grid;gap:8px}
+.group h3{margin:0;font-size:13px;font-weight:700;color:var(--soft);letter-spacing:.08em}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;font-size:15px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.stars{font-size:22px;letter-spacing:4px;min-height:1.2em}
+.close{min-height:44px;font-size:15px;font-weight:700;background:none;border:1px solid var(--line);border-radius:999px;padding:6px 16px;cursor:pointer}
+.small{font-size:13px;color:var(--soft);line-height:1.7}
 </style>
+<script>
+/* 自動更新：起動時とアプリに戻ってきた時に、サーバー上の最新版の番号を確かめる。
+   新しければ ?v=番号 を付けて読み直す（ブラウザに残った古い版を使わせないため）。 */
+const APP_VERSION = 'v7';
+(() => {
+  const KEY = 'yubi-reload-to';
+  async function check(){
+    try {
+      const res = await fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const m = (await res.text()).match(/const APP_VERSION = '([^']+)'/);
+      if (!m || m[1] === APP_VERSION) { try { sessionStorage.removeItem(KEY); } catch(e){} return; }
+      let tried = null; try { tried = sessionStorage.getItem(KEY); } catch(e){}
+      if (tried === m[1]) return;               // 同じ版への読み直しは1回だけ（ループ防止）
+      try { sessionStorage.setItem(KEY, m[1]); } catch(e){}
+      location.replace(location.pathname + '?v=' + encodeURIComponent(m[1]));
+    } catch(e){ /* オフラインなどは今の版のまま動かす */ }
+  }
+  check();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+})();
+</script>
 </head>
 <body>
-<div class="app">
 
-  <section class="screen" id="start">
-    <h1>ゆびで かぞえよう <span class="r">🍎</span></h1>
-    <div class="note" style="text-align:center;padding:6px 14px">試作 v5</div>
-    <div class="note">
-      <b>おうちのかたへ（試作版）</b><br>
-      カメラで手の形を読み取って、立てた指の数を数えます。<b>カメラの映像は端末の中だけで処理し、送信も保存もしません。</b>
-      ※試作版のため、手を見つけるプログラムとモデルはインターネットから読み込みます（初回のみ約10MB）。<br>
-      タブレットを立てて、お子さんの手がカメラに映るようにしてください。
+<section class="screen" id="start">
+  <h1 class="title">ゆびで<br>かぞえよう <em>🍎</em></h1>
+  <div class="demo" aria-hidden="true"><span>🍎</span><span>🍎</span><span>🍎</span><span></span><span></span></div>
+  <div class="note">
+    <b>おうちのかたへ</b><br>
+    カメラで手の形を読み取って、立てた指の数を数えます。<b>カメラの映像は端末の中だけで処理し、送信も保存もしません。</b>
+    両手で10まで数えられます。手首まで画面に入るように、タブレットを立ててください。<br>
+    ※試作版のため、手を見つけるプログラムとモデルはインターネットから読み込みます（初回のみ約10MB）。
+  </div>
+  <button class="big" id="go">はじめる</button>
+  <div class="err" id="err" hidden></div>
+  <span class="ver">試作 v7</span>
+</section>
+
+<div class="app" id="app" hidden>
+  <header class="top">
+    <div class="progress">
+      <span class="level" id="level">1〜3</span>
+      <span class="dots" id="dots" aria-label="この だんかいの せいかい"></span>
     </div>
-    <button class="big" id="go">はじめる</button>
-    <div class="err" id="err" hidden></div>
-  </section>
+    <button class="gear" id="openSheet">おうちのかた</button>
+  </header>
 
-  <section class="screen" id="game" hidden>
-    <div class="stars" id="stars" aria-label="正解の数"></div>
+  <main class="stage" id="game">
     <p class="prompt" id="prompt">りんごは いくつ？</p>
-    <div class="apples" id="apples"></div>
-  </section>
+    <div class="frames" id="apples"></div>
+  </main>
 
-  <section class="screen" id="done" hidden>
-    <h1>よく できました！</h1>
-    <div style="font-size:120px">💮</div>
-    <button class="big" id="again">もういちど</button>
-  </section>
-
-  <div class="bottom" id="bottom" hidden>
+  <section class="mirror" id="bottom">
     <div class="cam"><canvas id="view" width="320" height="240"></canvas></div>
     <div class="count">
-      <span class="n" id="n">–</span>
+      <div class="ring" id="hold"><b id="n">–</b></div>
+      <div class="fingers" id="fingerDots" aria-hidden="true">
+        <span><i></i><i></i><i></i><i></i><i></i></span><span><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
       <span class="lbl">いま みせている ゆび</span>
-      <span id="fingerDbg" style="font-size:18px;font-weight:700;letter-spacing:.15em;min-height:1.3em"></span>
-      <div class="hold"><i id="hold"></i></div>
+      <span class="dbgline" id="fingerDbg"></span>
     </div>
-  </div>
-
-  <div class="parent" id="parent" hidden>
-    <span>おうちのかた用：</span>
-    <button class="chip" data-stage="0" aria-pressed="true">1〜3</button>
-    <button class="chip" data-stage="1" aria-pressed="false">4〜5</button>
-    <button class="chip" data-stage="2" aria-pressed="false">6〜10</button>
-    <button class="chip" data-stage="3" aria-pressed="false">たしざん</button>
-    <button class="chip" id="skip">つぎの もんだい</button>
-    <button class="chip" id="mute" aria-pressed="false">おと けす</button>
-    <button class="chip" id="camBig" aria-pressed="false">カメラを おおきく</button>
-    <button class="chip" id="dbgBtn" aria-pressed="true">デバッグ表示</button>
-    <button class="chip" id="procBtn">しょり：CPU</button>
-    <span style="margin-left:auto">試作 v5</span>
-  </div>
+  </section>
 </div>
+
+<section class="screen" id="done" hidden>
+  <h1 class="title">よく<br>できました！</h1>
+  <div style="font-size:clamp(110px,30vmin,220px);line-height:1">💮</div>
+  <button class="big" id="again">もういちど</button>
+</section>
+
+<div class="shade" id="shade" hidden></div>
+<aside class="sheet" id="parent" hidden aria-label="おうちのかた用の設定">
+  <div class="sheet-in">
+    <h2>おうちのかた用 <button class="close" id="closeSheet">とじる</button></h2>
+    <div class="group">
+      <h3>だんかい</h3>
+      <div class="chips">
+        <button class="chip" data-stage="0" aria-pressed="true">1〜3</button>
+        <button class="chip" data-stage="1" aria-pressed="false">4〜5</button>
+        <button class="chip" data-stage="2" aria-pressed="false">6〜10（りょうて）</button>
+        <button class="chip" data-stage="3" aria-pressed="false">たしざん</button>
+      </div>
+    </div>
+    <div class="group">
+      <h3>そうさ</h3>
+      <div class="chips">
+        <button class="chip" id="skip">つぎの もんだい</button>
+        <button class="chip" id="mute" aria-pressed="false">おとを けす</button>
+      </div>
+    </div>
+    <div class="group">
+      <h3>カメラ・しらべる</h3>
+      <div class="chips">
+        <button class="chip" id="camBig" aria-pressed="false">カメラを おおきく</button>
+        <button class="chip" id="dbgBtn" aria-pressed="false">デバッグ表示</button>
+        <button class="chip" id="procBtn">しょり：CPU</button>
+      </div>
+    </div>
+    <p class="small">両手で数えるとき（6〜10）は、両手と手首が画面に入るように少し離れてください。<br>試作 v7</p>
+  </div>
+</aside>
 
 <video id="video" playsinline muted hidden></video>
 <div class="hanamaru" id="maru" hidden><div>💮</div></div>
@@ -115,7 +259,7 @@ h1 .r{color:var(--apple)}
 (() => {
   const $ = id => document.getElementById(id);
   const STAGES = [
-    {min:1,max:3}, {min:4,max:5}, {min:6,max:10}, {add:true}
+    {min:1,max:3,label:'1〜3'}, {min:4,max:5,label:'4〜5'}, {min:6,max:10,label:'6〜10'}, {add:true,label:'たしざん'}
   ];
   const PER_STAGE = 3;          // 各段階の正解数
   const HOLD_MS = 1000;         // 同じ本数を保つ時間
@@ -123,7 +267,7 @@ h1 .r{color:var(--apple)}
   const NUM = ['ぜろ','いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう'];
 
   let stage = 0, correctInStage = 0, target = 0, parts = null;
-  let busy = false, muted = false;
+  let busy = false, muted = false, playing = false;
   let shown = null, shownSince = 0, wrongSince = 0, hinted = false;
   let hands = null, stream = null;
 
@@ -185,7 +329,7 @@ h1 .r{color:var(--apple)}
     const thumb = { on: a > 0.8 && r1 > 0.8 && r2 > 1.3, a, b: r1, far: r2, tip: raw[4] };
     return [thumb, ...long];
   }
-  let debugOn = true, lastInfo = [], lastScore = [], fps = 0, fpsT = performance.now(), fpsN = 0;
+  let debugOn = false, lastInfo = [], lastScore = [], fps = 0, fpsT = performance.now(), fpsN = 0;
   // 数フレームの多数決で、ちらつきを抑える
   const recent = [];
   function smooth(n){
@@ -212,23 +356,30 @@ h1 .r{color:var(--apple)}
     target = t; hinted = false; wrongSince = 0;
     renderApples();
     renderStars();
-    const q = parts ? `りんごが ${NUM[parts[0]]}こ と ${NUM[parts[1]]}こ。ぜんぶで いくつ？ ゆびで みせてね`
-                    : 'りんごは いくつ？ ゆびで みせてね';
+    const q = parts ? `あかい りんごが ${NUM[parts[0]]}こ と、みどりの りんごが ${NUM[parts[1]]}こ。ぜんぶで いくつ？ ゆびで みせてね`
+                    : (t > 5 ? 'りんごは いくつ？ りょうての ゆびで みせてね' : 'りんごは いくつ？ ゆびで みせてね');
     $('prompt').textContent = parts ? 'ぜんぶで いくつ？' : 'りんごは いくつ？';
     say(q);
   }
+  // 10のわく：5こで1れつ。6こ以上は2れつ目へ（5と いくつ、が見てわかる）
   function renderApples(){
     const box = $('apples'); box.innerHTML = '';
-    const make = () => { const s = document.createElement('span'); s.className = 'apple'; s.textContent = '🍎'; return s; };
-    if (parts){
-      for (let i = 0; i < parts[0]; i++) box.appendChild(make());
-      const p = document.createElement('span'); p.className = 'plus'; p.textContent = 'と'; box.appendChild(p);
-      for (let i = 0; i < parts[1]; i++) box.appendChild(make());
-    } else {
-      for (let i = 0; i < target; i++) box.appendChild(make());
+    const ten = !parts && (target > 5 || STAGES[stage].min >= 6);
+    const frame = document.createElement('div');
+    frame.className = 'frame' + (ten ? ' ten' : '');
+    const size = ten ? 10 : 5;
+    const fill = parts ? [...Array(parts[0]).fill('🍎'), ...Array(parts[1]).fill('🍏')] : Array(target).fill('🍎');
+    for (let i = 0; i < size; i++){
+      const c = document.createElement('span'); c.className = 'cell';
+      if (fill[i]){ const a = document.createElement('span'); a.className = 'apple'; a.textContent = fill[i]; c.appendChild(a); }
+      frame.appendChild(c);
     }
+    box.appendChild(frame);
   }
-  function renderStars(){ $('stars').textContent = '⭐'.repeat(correctInStage) + '・'.repeat(PER_STAGE - correctInStage); }
+  function renderStars(){
+    $('dots').innerHTML = Array.from({length: PER_STAGE}, (_, i) => `<i class="${i < correctInStage ? 'on' : ''}"></i>`).join('');
+    $('level').textContent = STAGES[stage].label;
+  }
 
   async function hint(){
     hinted = true; busy = true;
@@ -261,24 +412,25 @@ h1 .r{color:var(--apple)}
   }
 
   function finish(){
-    $('game').hidden = true; $('done').hidden = false;
+    playing = false; $('done').hidden = false;
     say('よく できました！');
   }
 
   function setStage(i){
     stage = i; correctInStage = 0;
     document.querySelectorAll('[data-stage]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.stage === i)));
-    if (hands) hands.setOptions({ numHands: i >= 2 ? 2 : 1 }).catch(() => {});
   }
 
   // ---------- 判定 ----------
+  const fingerEls = [...document.querySelectorAll('#fingerDots i')];
   function onCount(n){
     $('n').textContent = n == null ? '–' : n;
+    fingerEls.forEach((el, i) => el.classList.toggle('on', n != null && i < n));
     const now = performance.now();
     if (n !== shown){ shown = n; shownSince = now; }
     const held = n == null ? 0 : Math.min(1, (now - shownSince) / HOLD_MS);
-    $('hold').style.width = (held * 100) + '%';
-    if (busy || n == null || $('game').hidden) return;
+    $('hold').style.setProperty('--p', (held * 100).toFixed(0));
+    if (busy || n == null || !playing) return;
     if (n === target && held >= 1){ correct(); return; }
     if (n !== target && n > 0){
       if (!wrongSince) wrongSince = now;
@@ -289,9 +441,8 @@ h1 .r{color:var(--apple)}
   // ---------- カメラと検出 ----------
   const view = $('view'), ctx = view.getContext('2d');
   function draw(results){
-    const iw = results.image.width || results.image.videoWidth, ih = results.image.height || results.image.videoHeight;
-    if (iw && ih && (iw !== imgW || ih !== imgH || view.width !== Math.round(iw / 2))){
-      imgW = iw; imgH = ih;
+    const iw = results.image.videoWidth || results.image.width, ih = results.image.videoHeight || results.image.height;
+    if (iw && ih && view.width !== Math.round(iw / 2)){
       view.width = Math.round(iw / 2); view.height = Math.round(ih / 2);
       document.querySelector('.cam').style.aspectRatio = `${iw} / ${ih}`;
     }
@@ -318,11 +469,11 @@ h1 .r{color:var(--apple)}
     ctx.font = `bold ${fs}px sans-serif`; ctx.textBaseline = 'top';
     const lines = [];
     const hs = results.multiHandLandmarks || [];
-    lines.push(`v5 ${delegate}  ${imgW}x${imgH}  ${fps}fps  手:${hs.length}` + (lastScore.length ? `  確信度:${lastScore.map(s => s.toFixed(2)).join(',')}` : ''));
+    lines.push(`${APP_VERSION} ${delegate}  ${imgW}x${imgH}  ${fps}fps  手:${hs.length}` + (lastScore.length ? `  確信度:${lastScore.map(s => s.toFixed(2)).join(',')}` : ''));
     if (errText) lines.push('エラー: ' + errText);
     if (!hs.length) lines.push('手が みつかりません');
     lastInfo.forEach((info, h) => info.forEach((f, i) => {
-      lines.push(`${'親人中薬小'[i]} ${f.on ? '○' : '×'}  a${f.a.toFixed(2)} b${f.b.toFixed(2)} r${f.far.toFixed(2)}`);
+      lines.push(`${h ? 'B' : 'A'}${'親人中薬小'[i]} ${f.on ? '○' : '×'}  a${f.a.toFixed(2)} b${f.b.toFixed(2)} r${f.far.toFixed(2)}`);
     }));
     const lh = fs + 3;
     ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, 0, W, lh * lines.length + 6);
@@ -360,7 +511,7 @@ h1 .r{color:var(--apple)}
       $('go').disabled = false; $('go').textContent = 'はじめる';
       return fail('手を見つけるモデルを読み込めませんでした。インターネットにつながっているか確かめてください。（詳細：' + String(e && e.message || e).slice(0, 120) + '）');
     }
-    $('start').hidden = true; $('game').hidden = false; $('bottom').hidden = false; $('parent').hidden = false;
+    $('start').hidden = true; $('app').hidden = false; playing = true;
     newQuestion();
     let lastT = -1;
     const loop = () => {
@@ -382,7 +533,7 @@ h1 .r{color:var(--apple)}
     if (old) try { old.close(); } catch(e){}
     hands = await vision.HandLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: MODEL, delegate },
-      runningMode: 'VIDEO', numHands: stage >= 2 ? 2 : 1,
+      runningMode: 'VIDEO', numHands: 2,            // いつも両手まで数える
       minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5
     });
     errText = '';
@@ -400,11 +551,15 @@ h1 .r{color:var(--apple)}
   }
   function fail(msg){ $('err').textContent = msg; $('err').hidden = false; }
 
+  // ---------- 操作 ----------
+  const openSheet = open => { $('parent').hidden = !open; $('shade').hidden = !open; };
   $('go').addEventListener('click', start);
+  $('openSheet').addEventListener('click', () => openSheet(true));
+  $('closeSheet').addEventListener('click', () => openSheet(false));
+  $('shade').addEventListener('click', () => openSheet(false));
   $('camBig').addEventListener('click', e => {
-    const big = document.querySelector('.cam').classList.toggle('big');
+    const big = document.body.classList.toggle('cam-large');
     e.currentTarget.setAttribute('aria-pressed', String(big));
-    $('game').hidden = big && !$('start').hidden ? $('game').hidden : big;   // 大きく表示中はゲーム画面を隠す
   });
   $('procBtn').addEventListener('click', async e => {
     if (!vision) return;
@@ -412,11 +567,16 @@ h1 .r{color:var(--apple)}
     e.currentTarget.textContent = 'しょり：' + delegate;
     try { await makeLandmarker(); } catch(err){ errText = 'GPUを使えません'; delegate = 'CPU'; e.currentTarget.textContent = 'しょり：CPU'; await makeLandmarker(); }
   });
-  $('dbgBtn').addEventListener('click', e => { debugOn = !debugOn; e.currentTarget.setAttribute('aria-pressed', String(debugOn)); });
-  $('again').addEventListener('click', () => { setStage(0); $('done').hidden = true; $('game').hidden = false; newQuestion(); });
-  $('skip').addEventListener('click', () => { if (!busy) newQuestion(); });
+  $('dbgBtn').addEventListener('click', e => {
+    debugOn = !debugOn; document.body.classList.toggle('debug', debugOn);
+    e.currentTarget.setAttribute('aria-pressed', String(debugOn));
+  });
+  $('again').addEventListener('click', () => { setStage(0); $('done').hidden = true; playing = true; newQuestion(); });
+  $('skip').addEventListener('click', () => { if (!busy){ newQuestion(); openSheet(false); } });
   $('mute').addEventListener('click', e => { muted = !muted; e.currentTarget.setAttribute('aria-pressed', String(muted)); if (muted && 'speechSynthesis' in window) speechSynthesis.cancel(); });
-  document.querySelectorAll('[data-stage]').forEach(b => b.addEventListener('click', () => { if (busy) return; setStage(+b.dataset.stage); newQuestion(); }));
+  document.querySelectorAll('[data-stage]').forEach(b => b.addEventListener('click', () => {
+    if (busy) return; setStage(+b.dataset.stage); newQuestion(); openSheet(false);
+  }));
 })();
 </script>
 </body>
