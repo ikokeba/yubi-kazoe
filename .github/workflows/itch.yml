@@ -1,0 +1,29 @@
+# itch.io に公開する。VERSION を変えて main に push した時（と手動実行）に動く。
+# 必要な設定（リポジトリの Settings → Secrets and variables → Actions）:
+#   Secret   BUTLER_API_KEY : itch.io の API キー（https://itch.io/user/settings/api-keys）
+#   Variable ITCH_GAME      : 「itchのユーザー名/ゲームのURL名」（例 yourname/karadade-manabou）
+name: itch
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['VERSION']
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 公開するファイルをまとめる
+        run: |
+          mkdir dist && cp index.html about.html dist/ && cp -r vendor dist/
+          rm -f dist/vendor/NOTICE.md
+          du -sh dist; find dist -type f | wc -l
+      - name: itch.io に送る（設定が済んでいなければ飛ばす）
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_GAME: ${{ vars.ITCH_GAME }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_GAME" ]; then echo "itch.io の設定がまだなので飛ばします"; exit 0; fi
+          curl -fsSL -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip && chmod +x butler
+          ./butler push dist "$ITCH_GAME:html" --userversion "$(cat VERSION)"

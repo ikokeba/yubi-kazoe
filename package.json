@@ -5,7 +5,7 @@
   "scripts": {
     "build": "python3 tools/build.py",
     "test": "node tests/unit/tokei.test.mjs && node tests/unit/katachi.test.mjs",
-    "e2e:setup": "sh tests/e2e/fetch_models.sh && python3 tests/e2e/make_videos.py",
+    "e2e:setup": "sh tests/e2e/setup.sh && python3 tests/e2e/make_videos.py",
     "e2e": "node tests/e2e/run.mjs"
   }
 }

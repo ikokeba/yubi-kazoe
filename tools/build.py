@@ -1,4 +1,4 @@
-"""src/app.html に音声データと版番号を差し込んで、公開用の index.html を作る。
+"""src/app.html に音声データと版番号を差し込んで、公開用の index.html（と about.html）を作る。
 
 使い方: python3 tools/build.py        （版番号は VERSION ファイルから読む）
 """
@@ -10,4 +10,6 @@ voice = json.loads((ROOT / 'assets' / 'voice' / 'voice.json').read_text())
 out = src.replace('/*VOICE_DATA*/{}', json.dumps(voice, separators=(',', ':'))).replace('__VERSION__', version)
 assert '__VERSION__' not in out and '/*VOICE_DATA*/' not in out
 (ROOT / 'index.html').write_text(out)
-print(f'built {version}: {len(out) // 1024} KB, {len(voice)} voice clips')
+about = (ROOT / 'src' / 'about.html').read_text().replace('__VERSION__', version)
+(ROOT / 'about.html').write_text(about)
+print(f'built {version}: index.html {len(out) // 1024} KB ({len(voice)} voice clips), about.html')

@@ -3,9 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>からだでまなぼう 試作 v11</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<title>からだでまなぼう</title>
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
 <style>
 /* 絵本の机：紙色の地。ゆび＝「10のわく」にりんご、とけい＝鏡の上に文字盤を重ねる。
    縦長はうえ＝もんだい／した＝かがみ、横長はひだり＝もんだい／みぎ＝かがみ。
@@ -207,11 +206,16 @@ body.cam-large .cam{height:auto;width:auto;max-width:100%;max-height:calc(100dvh
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .close{min-height:44px;font-size:15px;font-weight:700;background:none;border:1px solid var(--line);border-radius:999px;padding:6px 16px;cursor:pointer}
 .small{font-size:13px;color:var(--soft);line-height:1.7}
+.gate{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:11;width:min(360px,calc(100vw - 32px));background:var(--card);
+  border:2px solid var(--line);border-radius:20px;padding:20px;display:grid;gap:12px;justify-items:center;text-align:center;box-shadow:0 8px 30px rgba(59,47,42,.25)}
+.gateQ{margin:0;font-size:32px;font-weight:900;font-variant-numeric:tabular-nums}
+.gate .chips{justify-content:center}
+.gate .chip{min-width:64px;font-size:20px;font-weight:700}
 </style>
 <script>
 /* 自動更新：起動時とアプリに戻ってきた時に、サーバー上の最新版の番号を確かめる。
    新しければ ?v=番号 を付けて読み直す（ブラウザに残った古い版を使わせないため）。 */
-const APP_VERSION = 'v11';
+const APP_VERSION = 'v12';
 (() => {
   const KEY = 'yubi-reload-to';
   async function check(){
@@ -240,11 +244,11 @@ const APP_VERSION = 'v11';
     <b>おうちのかたへ</b><br>
     カメラで手や体の形を読み取って遊びます。<b>カメラの映像は端末の中だけで処理し、送信も保存もしません。</b>
     タブレットを立てて、手や体が画面に入るようにしてください。<br>
-    ※試作版のため、読み取りのプログラムとモデルはインターネットから読み込みます（初回のみ、あそびごとに約6〜10MB）。
+    読み取りのプログラムとモデルはこのアプリと一緒に配信していて、遊んでいる間は外部と通信しません（初回のみ約25MBを読み込みます。Wi-Fi 推奨）。
   </div>
   <button class="big" id="go">はじめる</button>
   <div class="err" id="err" hidden></div>
-  <span class="ver">試作 v11</span>
+  <span class="ver">版 v12</span>
 </section>
 
 <section class="screen" id="menu" hidden>
@@ -327,6 +331,12 @@ const APP_VERSION = 'v11';
 </section>
 
 <div class="shade" id="shade" hidden></div>
+<div class="gate" id="gate" hidden role="dialog" aria-label="おうちのかたの確認">
+  <p class="small">おうちのかたへ：こたえを えらんでください</p>
+  <p class="gateQ" id="gateQ">7 × 6 = ?</p>
+  <div class="chips" id="gateOpts"></div>
+  <button class="close" id="gateClose">やめる</button>
+</div>
 <aside class="sheet" id="parent" hidden aria-label="おうちのかた用の設定">
   <div class="sheet-in">
     <h2>おうちのかた用 <button class="close" id="closeSheet">とじる</button></h2>
@@ -360,7 +370,8 @@ const APP_VERSION = 'v11';
       </div>
     </div>
     <p class="small" id="sheetNote"></p>
-    <p class="small">音声：Open JTalk（HTS voice tohoku-f01 © 東北大学 伊藤・能勢研究室、CC BY 4.0）。効果音とBGMはこのアプリの中で合成しています。<br>試作 v11</p>
+    <p class="small">音声：Open JTalk（HTS voice tohoku-f01 © 東北大学 伊藤・能勢研究室、CC BY 4.0）。効果音とBGMはこのアプリの中で合成しています。<br>版 v12</p>
+    <p class="small"><a href="about.html" target="_blank" rel="noopener" style="color:var(--apple)">このアプリについて（プライバシー・あそびかた・クレジット）</a></p>
   </div>
 </aside>
 
@@ -1109,10 +1120,11 @@ window.VOICE_DATA = {"welcome":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAA
   }
 
   // ---------- 検出（MediaPipe Tasks Vision） ----------
-  const TV = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+  // 読み取りのプログラムとモデルは、このアプリと一緒に配信する（外部と通信しない）
+  const TV = new URL('vendor/tasks-vision', location.href).href.replace(/\/$/, '');
   const MODELS = {
-    hand: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
-    pose: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'
+    hand: 'vendor/models/hand_landmarker.task',
+    pose: 'vendor/models/pose_landmarker_lite.task'
   };
   let vision = null, fileset = null, delegate = 'CPU', errText = '';
   const detectors = { hand: null, pose: null };
@@ -1225,9 +1237,22 @@ window.VOICE_DATA = {"welcome":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAA
   document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => openGame(b.dataset.game, b)));
   $('back').addEventListener('click', toMenu);
   $('toMenu').addEventListener('click', toMenu);
-  $('openSheet').addEventListener('click', () => openSheet(true));
+  // 保護者ゲート：かけ算の答えを選ぶと「おうちのかた」が開く（子どもが設定や外部リンクに触れないため）
+  $('openSheet').addEventListener('click', () => {
+    const a = 6 + Math.floor(Math.random() * 4), b = 3 + Math.floor(Math.random() * 7), ans = a * b;
+    const opts = new Set([ans]); while (opts.size < 4) opts.add(ans + (Math.floor(Math.random() * 9) - 4) * (1 + Math.floor(Math.random() * 3)) || ans + 1);
+    $('gateQ').textContent = `${a} × ${b} = ?`;
+    $('gateOpts').innerHTML = [...opts].sort(() => Math.random() - 0.5).map(v => `<button class="chip" data-ans="${v}">${v}</button>`).join('');
+    $('gate').hidden = false; $('shade').hidden = false;
+  });
+  $('gateOpts').addEventListener('click', e => {
+    const b = e.target.closest('[data-ans]'); if (!b) return;
+    $('gate').hidden = true;
+    if (+b.dataset.ans === +$('gateQ').textContent.split('=')[0].split('×').map(Number).reduce((x, y) => x * y)) openSheet(true); else $('shade').hidden = true;
+  });
+  $('gateClose').addEventListener('click', () => { $('gate').hidden = true; $('shade').hidden = true; });
   $('closeSheet').addEventListener('click', () => openSheet(false));
-  $('shade').addEventListener('click', () => openSheet(false));
+  $('shade').addEventListener('click', () => { openSheet(false); $('gate').hidden = true; });
   $('camBig').addEventListener('click', e => {
     const big = document.body.classList.toggle('cam-large');
     e.currentTarget.setAttribute('aria-pressed', String(big));
