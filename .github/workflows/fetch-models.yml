@@ -1,0 +1,27 @@
+# Google の公式配布元から MediaPipe のモデルを取得して vendor/models/ にコミットする。
+# 手動実行（Actions タブの Run workflow）か、このファイルを変更して push した時に動く。
+name: fetch-models
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/fetch-models.yml']
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 公式モデルを取得
+        run: |
+          mkdir -p vendor/models
+          base=https://storage.googleapis.com/mediapipe-models
+          curl -fsSL -o vendor/models/hand_landmarker.task $base/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+          curl -fsSL -o vendor/models/pose_landmarker_lite.task $base/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
+          ls -la vendor/models; sha256sum vendor/models/*.task | tee vendor/models/SHA256SUMS
+      - name: 変わっていればコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vendor/models
+          git diff --cached --quiet || (git commit -m "公式モデルを取得（fetch-models）" && git push)
