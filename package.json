@@ -1,0 +1,11 @@
+{
+  "name": "yubi-kazoe",
+  "private": true,
+  "description": "からだでまなぼう（仮）— カメラで手や体を読み取って遊ぶ、4〜6歳向けの知育ミニゲーム集",
+  "scripts": {
+    "build": "python3 tools/build.py",
+    "test": "node tests/unit/tokei.test.mjs && node tests/unit/katachi.test.mjs",
+    "e2e:setup": "sh tests/e2e/fetch_models.sh && python3 tests/e2e/make_videos.py",
+    "e2e": "node tests/e2e/run.mjs"
+  }
+}
