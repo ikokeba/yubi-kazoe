@@ -26,4 +26,8 @@ jobs:
           if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_GAME" ]; then echo "itch.io の設定がまだなので飛ばします"; exit 0; fi
           curl -fsSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
           unzip -q butler.zip && chmod +x butler
-          ./butler push dist "$ITCH_GAME:html" --userversion "$(cat VERSION)"
+          echo "::notice::送り先 $ITCH_GAME:html"
+          if ! ./butler push dist "$ITCH_GAME:html" --userversion "$(cat VERSION)" > out.txt 2>&1; then
+            cat out.txt; tail -5 out.txt | tr '\n' ' ' | sed 's/^/::error::/'; echo; exit 1
+          fi
+          cat out.txt
