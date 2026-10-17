@@ -24,6 +24,6 @@ jobs:
           ITCH_GAME: ${{ vars.ITCH_GAME }}
         run: |
           if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_GAME" ]; then echo "itch.io の設定がまだなので飛ばします"; exit 0; fi
-          curl -fsSL -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          curl -fsSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
           unzip -q butler.zip && chmod +x butler
           ./butler push dist "$ITCH_GAME:html" --userversion "$(cat VERSION)"
