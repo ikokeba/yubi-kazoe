@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>からだでまなぼう 試作v8</title>
+<title>からだでまなぼう 試作v9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -187,7 +187,7 @@ body.cam-large .cam{height:auto;width:auto;max-width:100%;max-height:calc(100dvh
 <script>
 /* 自動更新：起動時とアプリに戻ってきた時に、サーバー上の最新版の番号を確かめる。
    新しければ ?v=番号 を付けて読み直す（ブラウザに残った古い版を使わせないため）。 */
-const APP_VERSION = 'v8';
+const APP_VERSION = 'v9';
 (() => {
   const KEY = 'yubi-reload-to';
   async function check(){
@@ -220,7 +220,7 @@ const APP_VERSION = 'v8';
   </div>
   <button class="big" id="go">はじめる</button>
   <div class="err" id="err" hidden></div>
-  <span class="ver">試作 v8</span>
+  <span class="ver">試作 v9</span>
 </section>
 
 <section class="screen" id="menu" hidden>
@@ -310,7 +310,7 @@ const APP_VERSION = 'v8';
       </div>
     </div>
     <p class="small" id="sheetNote"></p>
-    <p class="small">試作 v8</p>
+    <p class="small">試作 v9</p>
   </div>
 </aside>
 
@@ -396,14 +396,17 @@ const APP_VERSION = 'v8';
     const long = [[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]].map(([m, p, dd, t]) => {
       const a = straight(lm[m], lm[p], lm[dd]), b = straight(lm[p], lm[dd], lm[t]);
       const far = d(lm[0], lm[t]) / d(lm[0], lm[p]);
-      return { on: a > 0.8 && b > 0.7 && far > 1, a, b, far, tip: raw[t] };
+      const up = raw[t].y < raw[0].y;   // 指先が手首より上（画像は下向きが＋）
+      return { on: a > 0.8 && b > 0.7 && far > 1 && up, a, b, far, up, tip: raw[t] };
     });
     // 親指：まっすぐ伸びていて、指先が人差し指の付け根から手のひら幅の8割以上離れている
     const palmW = d(lm[5], lm[17]);
     const a = straight(lm[2], lm[3], lm[4]), r1 = d(lm[4], lm[5]) / palmW, r2 = d(lm[4], lm[17]) / palmW;
-    const thumb = { on: a > 0.8 && r1 > 0.8 && r2 > 1.3, a, b: r1, far: r2, tip: raw[4] };
+    const tup = raw[4].y < raw[0].y;
+    const thumb = { on: a > 0.8 && r1 > 0.8 && r2 > 1.3 && tup, a, b: r1, far: r2, up: tup, tip: raw[4] };
     return [thumb, ...long];
   }
+  let activeHands = [];
   let debugOn = false, lastInfo = [], lastScore = [], fps = 0, fpsT = performance.now(), fpsN = 0;
   // 数フレームの多数決で、ちらつきを抑える
   const recent = [];
@@ -631,6 +634,8 @@ const APP_VERSION = 'v8';
     const X = p => (1 - p.x) * W;
     const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
     list.forEach((lm, h) => {
+      const act = activeHands[h] !== false;
+      ctx.globalAlpha = act ? 1 : 0.35;   // 数えない手はうすく
       ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2;
       BONES.forEach(([i, j]) => { ctx.beginPath(); ctx.moveTo(X(lm[i]), lm[i].y * H); ctx.lineTo(X(lm[j]), lm[j].y * H); ctx.stroke(); });
       const info = lastInfo[h] || [];
@@ -640,6 +645,7 @@ const APP_VERSION = 'v8';
         ctx.beginPath(); ctx.arc(X(p), p.y * H, f < 0 ? 3 : 7, 0, Math.PI * 2); ctx.fill();
       });
     });
+    ctx.globalAlpha = 1;
     const lines = [`手:${list.length}` + (lastScore.length ? `  確信度:${lastScore.map(s => s.toFixed(2)).join(',')}` : '')];
     if (!list.length) lines.push('手が みつかりません');
     lastInfo.forEach((info, h) => info.forEach((f, i) => lines.push(`${h ? 'B' : 'A'}${'親人中薬小'[i]} ${f.on ? '○' : '×'}  a${f.a.toFixed(2)} b${f.b.toFixed(2)} r${f.far.toFixed(2)}`)));
@@ -729,10 +735,16 @@ const APP_VERSION = 'v8';
       const list = res.landmarks || [];
       lastScore = (res.handedness || []).map(h => h[0] ? h[0].score : 0);
       lastInfo = list.map(fingerFlags);
+      // 答えが5いかの時は片手だけ数える：上を向いている手（指先が手首より上の指が多い手）。
+      // 同じなら手首が高いほう。下げた手は数えない
+      const oneHand = (parts ? parts[0] + parts[1] : target) <= 5;
+      const upScore = h => lastInfo[h].filter(f => f.up).length * 10 - list[h][0].y;
+      activeHands = list.map(() => !oneHand);
+      if (oneHand && list.length){ let best = 0; list.forEach((lm, i) => { if (upScore(i) > upScore(best)) best = i; }); activeHands[best] = true; }
       drawHands(video, list);
       if (!list.length){ recent.length = 0; $('fingerDbg').textContent = ''; onCount(null); return; }
-      $('fingerDbg').textContent = lastInfo.map(f => '親人中薬小'.split('').map((c, i) => f[i].on ? c : '・').join('')).join(' / ');
-      onCount(smooth(lastInfo.flat().filter(f => f.on).length));
+      $('fingerDbg').textContent = lastInfo.map((f, h) => (activeHands[h] ? '' : '（数えない）') + '親人中薬小'.split('').map((c, i) => f[i].on ? c : '・').join('')).join(' / ');
+      onCount(smooth(lastInfo.filter((f, h) => activeHands[h]).flat().filter(f => f.on).length));
     } else {
       const lm = (res.landmarks || [])[0] || null;
       onClock(lm);
