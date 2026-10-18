@@ -17,9 +17,10 @@
 | --- | --- |
 | `src/app.html` | 編集するソース（画面・判定・音のすべて） |
 | `VERSION` | 版番号の正本 |
-| `assets/voice/voice.json` | 指示音声（mp3 を base64 で格納） |
+| `assets/voice/voice.json` / `voice_en.json` | 指示音声（日本語 / 英語。mp3 を base64 で格納） |
 | `tools/build.py` | ソースに音声と版番号を差し込んで `index.html` を作る |
-| `tools/gen_voice.py` | 指示音声の生成（Open JTalk + tohoku-f01） |
+| `tools/gen_voice.py` | 日本語の指示音声の生成（Open JTalk + tohoku-f01） |
+| `tools/gen_voice_en.py` | 英語の指示音声の生成（Kokoro-82M） |
 | `index.html`・`about.html` | 公開ファイル（GitHub Pages が main から配信）。手で編集しない |
 | `src/about.html` | 「このアプリについて」のソース |
 | `vendor/` | 同梱物（MediaPipe・モデル・フォント）。入手元とライセンスは `vendor/NOTICE.md` |
@@ -39,6 +40,7 @@ npm run e2e:setup && npm run e2e   # 通しテスト（外部通信ゼロ・保�
 ## クレジット
 
 - 音声：Open JTalk、HTS voice tohoku-f01 © 東北大学 伊藤・能勢研究室（CC BY 4.0）
+- 英語の音声：Kokoro-82M（Apache License 2.0）
 - 手と体の読み取り：MediaPipe Tasks Vision とモデル（Apache License 2.0）
 - フォント：Zen Maru Gothic（SIL Open Font License 1.1）
 - テスト画像：google-ai-edge/mediapipe-samples、tensorflow/tfjs-models のサンプル画像（Apache License 2.0）

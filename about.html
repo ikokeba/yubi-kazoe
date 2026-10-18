@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>からだでまなぼう について</title>
+<title>からだでまなぼう について / About Move &amp; Learn</title>
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
 <style>
 :root{color-scheme:light;--paper:#fbf5ea;--card:#fffdf7;--ink:#3b2f2a;--soft:#857466;--line:#eadfcd;--apple:#e2453b;
@@ -23,10 +23,13 @@ th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertic
 th{white-space:nowrap;color:var(--soft);font-weight:700}
 .small{font-size:13px;color:var(--soft)}
 a{color:var(--apple)}
+.lang{text-align:right;font-size:14px}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
-<main>
+<main lang="ja" id="ja">
+  <p class="lang"><a href="?lang=en">English</a></p>
   <h1>からだでまなぼう <em>🍎</em><br><span style="font-size:.55em">について（おうちのかたへ）</span></h1>
 
   <section>
@@ -46,7 +49,7 @@ a{color:var(--apple)}
       <li><b>カメラの映像は、お使いの端末の中だけで処理します。</b>映像や写真を保存したり、どこかへ送ったりすることはありません。</li>
       <li>手や体の読み取りに使うプログラムとモデル（Google の MediaPipe）は、このアプリと一緒に配信しています。遊んでいる間、外部のサービスとは通信しません。</li>
       <li>広告、アクセス解析、外部へのデータ送信は一切ありません。名前などの入力もありません。</li>
-      <li>端末に保存するのは、シールちょうのシールと、おうちのかた用の設定（BGM・あそぶ時間）だけです。ブラウザのサイトデータを消すと消えます。</li>
+      <li>端末に保存するのは、シールちょうのシールと、おうちのかた用の設定（ことば・BGM・あそぶ時間）だけです。ブラウザのサイトデータを消すと消えます。</li>
     </ul>
   </section>
 
@@ -55,7 +58,7 @@ a{color:var(--apple)}
     <ul>
       <li>タブレットを立てて、お子さんの目の高さに置いてください。ゆびは40〜60cm、とけい・かたちは1.5〜2m離れると読み取りやすくなります。</li>
       <li>明るい部屋で、窓を背にしないと読み取りやすくなります。</li>
-      <li>画面右上の「おうちのかた」から、段階・音・BGM・あそぶ時間（なし・5・10・15分）を変えられます。開くときに、かんたんな計算の問題が出ます（お子さんが設定を変えないための仕掛けです）。</li>
+      <li>画面右上の「おうちのかた」から、段階・ことば（日本語／英語）・音・BGM・あそぶ時間（なし・5・10・15分）を変えられます。開くときに、かんたんな計算の問題が出ます（お子さんが設定を変えないための仕掛けです）。</li>
       <li>はじめて開くときは、読み取りのプログラムとモデル（約25MB）を読み込みます。Wi-Fi でのご利用をおすすめします。</li>
     </ul>
   </section>
@@ -68,13 +71,73 @@ a{color:var(--apple)}
   <section>
     <h2>クレジット・ライセンス</h2>
     <ul class="small">
-      <li>音声：Open JTalk、HTS voice tohoku-f01 © 東北大学 伊藤・能勢研究室（CC BY 4.0）</li>
+      <li>日本語の声：Open JTalk、HTS voice tohoku-f01 © 東北大学 伊藤・能勢研究室（CC BY 4.0）</li>
+      <li>英語の声：Kokoro-82M（Apache License 2.0）</li>
       <li>手と体の読み取り：MediaPipe Tasks Vision とモデル（Apache License 2.0）</li>
       <li>フォント：Zen Maru Gothic（SIL Open Font License 1.1）</li>
       <li>効果音・BGM：アプリの中で合成しています</li>
     </ul>
-    <p class="small">からだでまなぼう 版：v12</p>
+    <p class="small">からだでまなぼう 版：v13</p>
   </section>
 </main>
+<main lang="en" id="en" hidden>
+  <p class="lang"><a href="?lang=ja">日本語</a></p>
+  <h1>Move &amp; Learn <em>🍎</em><br><span style="font-size:.55em">About this app (for parents)</span></h1>
+
+  <section>
+    <h2>What is it?</h2>
+    <p>A learning app for ages 4–6. Children move their fingers and body in front of the camera to play with numbers, clocks and shapes. Voice and pictures guide them, so no reading is needed. (Japanese title: からだでまなぼう)</p>
+    <table>
+      <tr><th>Finger Count</th><td>Hold up one finger for each apple. 6–10 uses both hands, and there is simple adding too.</td></tr>
+      <tr><th>Body Clock</th><td>Use your arms as clock hands to make times like "3 o'clock". Either arm can be the long hand.</td></tr>
+      <tr><th>Copy the Shape</th><td>Make the same shape as the picture with your body (airplane, hooray, pencil, circle).</td></tr>
+      <tr><th>Free Counting</th><td>Apples appear for each finger held up. No right or wrong answers, good for younger children.</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Camera and privacy</h2>
+    <ul>
+      <li><b>Camera video is processed only on your device.</b> No video or photos are saved or sent anywhere.</li>
+      <li>The program and models that read hands and bodies (Google MediaPipe) are delivered with this app. While playing, it does not talk to any outside service.</li>
+      <li>No ads, no analytics, no data sent anywhere. No names or other details are asked for.</li>
+      <li>The only things saved on the device are the stickers in the sticker book and the parent settings (language, music, play time). Clearing your browser's site data removes them.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Tips for playing</h2>
+    <ul>
+      <li>Stand the tablet up at your child's eye level. For fingers, 40–60 cm (1.5–2 ft) away works best; for the clock and shapes, 1.5–2 m (5–6 ft).</li>
+      <li>A bright room helps. Avoid having a window behind your child.</li>
+      <li>Use "Parents" at the top right to change the level, language, sounds, music and play time (off, 5, 10 or 15 minutes). A simple multiplication question appears first, so children don't change the settings.</li>
+      <li>The first time, the tracking program and models (about 25 MB) are loaded. Wi-Fi is recommended.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Feedback and bug reports</h2>
+    <p>Please use the comments on the app's itch.io page.</p>
+  </section>
+
+  <section>
+    <h2>Credits and licenses</h2>
+    <ul class="small">
+      <li>Japanese voice: Open JTalk, HTS voice tohoku-f01 © Tohoku University, Ito-Nose Lab (CC BY 4.0)</li>
+      <li>English voice: Kokoro-82M (Apache License 2.0)</li>
+      <li>Hand and body tracking: MediaPipe Tasks Vision and models (Apache License 2.0)</li>
+      <li>Font: Zen Maru Gothic (SIL Open Font License 1.1)</li>
+      <li>Sound effects and music: synthesized in the app</li>
+    </ul>
+    <p class="small">Move &amp; Learn version: v13</p>
+  </section>
+</main>
+<script>
+(() => {
+  let l = 'ja';
+  try { const q = new URLSearchParams(location.search).get('lang'); l = q || localStorage.getItem('yubi-lang') || ((navigator.language || 'ja').toLowerCase().startsWith('ja') ? 'ja' : 'en'); } catch(e){}
+  if (l === 'en'){ document.getElementById('ja').hidden = true; document.getElementById('en').hidden = false; document.documentElement.lang = 'en'; }
+})();
+</script>
 </body>
 </html>

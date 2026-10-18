@@ -204,6 +204,9 @@ body.cam-large .cam{height:auto;width:auto;max-width:100%;max-height:calc(100dvh
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{min-height:44px;font-size:15px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.langSw{align-self:flex-end;display:flex;gap:6px;margin-right:max(4px,env(safe-area-inset-right,0px))}
+@media (min-width:700px) and (min-height:600px){.langSw{position:absolute;top:max(12px,env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));margin:0}}
+.langSw .chip{min-height:40px;padding:6px 14px;font-size:14px;font-weight:700}
 .close{min-height:44px;font-size:15px;font-weight:700;background:none;border:1px solid var(--line);border-radius:999px;padding:6px 16px;cursor:pointer}
 .small{font-size:13px;color:var(--soft);line-height:1.7}
 .gate{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:11;width:min(360px,calc(100vw - 32px));background:var(--card);
@@ -238,55 +241,56 @@ const APP_VERSION = '__VERSION__';
 <body>
 
 <section class="screen" id="start">
-  <h1 class="title">からだで<br>まなぼう <em>🍎</em></h1>
-  <p class="sub">ゆびと からだを うごかして かず・とけい・かたちを まなぶ</p>
-  <div class="note">
+  <div class="langSw" id="langSw" role="group" aria-label="Language"><button class="chip" data-lang="ja">日本語</button><button class="chip" data-lang="en">English</button></div>
+  <h1 class="title" data-t="title">からだで<br>まなぼう <em>🍎</em></h1>
+  <p class="sub" data-t="sub">ゆびと からだを うごかして かず・とけい・かたちを まなぶ</p>
+  <div class="note" data-t="note">
     <b>おうちのかたへ</b><br>
     カメラで手や体の形を読み取って遊びます。<b>カメラの映像は端末の中だけで処理し、送信も保存もしません。</b>
     タブレットを立てて、手や体が画面に入るようにしてください。<br>
     読み取りのプログラムとモデルはこのアプリと一緒に配信していて、遊んでいる間は外部と通信しません（初回のみ約25MBを読み込みます。Wi-Fi 推奨）。
   </div>
-  <button class="big" id="go">はじめる</button>
+  <button class="big" id="go" data-t="go">はじめる</button>
   <div class="err" id="err" hidden></div>
-  <span class="ver">版 __VERSION__</span>
+  <span class="ver"><span data-t="ver">版</span> __VERSION__</span>
 </section>
 
 <section class="screen" id="menu" hidden>
-  <h1 class="title" style="font-size:clamp(28px,5.5vmin,56px)">なにで あそぶ？</h1>
+  <h1 class="title" style="font-size:clamp(28px,5.5vmin,56px)" data-t="menuTitle">なにで あそぶ？</h1>
   <div class="games">
     <button class="game" data-game="yubi">
       <span class="pic" aria-hidden="true">✌️🍎</span>
-      <span class="name">ゆびで かぞえよう</span>
-      <span class="what">りんごの かずだけ ゆびを たてよう</span>
+      <span class="name" data-t="n_yubi">ゆびで かぞえよう</span>
+      <span class="what" data-t="w_yubi">りんごの かずだけ ゆびを たてよう</span>
     </button>
     <button class="game" data-game="tokei">
       <span class="pic" aria-hidden="true">🙆🕒</span>
-      <span class="name">からだ とけい</span>
-      <span class="what">うでを とけいの はりにして じこくを つくろう</span>
+      <span class="name" data-t="n_tokei">からだ とけい</span>
+      <span class="what" data-t="w_tokei">うでを とけいの はりにして じこくを つくろう</span>
     </button>
     <button class="game" data-game="katachi">
       <span class="pic" aria-hidden="true">🙌⭕</span>
-      <span class="name">まねっこ かたち</span>
-      <span class="what">からだで おてほんと おなじ かたちを つくろう</span>
+      <span class="name" data-t="n_katachi">まねっこ かたち</span>
+      <span class="what" data-t="w_katachi">からだで おてほんと おなじ かたちを つくろう</span>
     </button>
     <button class="game" data-game="free">
       <span class="pic" aria-hidden="true">🖐️🍎</span>
-      <span class="name">じゆうに かぞえよう</span>
-      <span class="what">ゆびを たてると りんごが でてくるよ</span>
+      <span class="name" data-t="n_free">じゆうに かぞえよう</span>
+      <span class="what" data-t="w_free">ゆびを たてると りんごが でてくるよ</span>
     </button>
   </div>
-  <button class="stickerBtn" id="openStickers">シールちょう <span id="stickerCount">0</span> / 24</button>
+  <button class="stickerBtn" id="openStickers"><span data-t="book">シールちょう</span> <span id="stickerCount">0</span> / 24</button>
   <div class="err" id="menuErr" hidden></div>
 </section>
 
 <div class="app" id="app" hidden>
   <header class="top">
     <div class="progress">
-      <button class="back" id="back">もどる</button>
+      <button class="back" id="back" data-t="back">もどる</button>
       <span class="level" id="level">1〜3</span>
       <span class="dots" id="dots" aria-label="この だんかいの せいかい"></span>
     </div>
-    <button class="gear" id="openSheet">おうちのかた</button>
+    <button class="gear" id="openSheet" data-t="parents">おうちのかた</button>
   </header>
 
   <main class="stage" id="game">
@@ -309,109 +313,148 @@ const APP_VERSION = '__VERSION__';
       <div class="fingers" id="fingerDots" aria-hidden="true">
         <span><i></i><i></i><i></i><i></i><i></i></span><span><i></i><i></i><i></i><i></i><i></i></span>
       </div>
-      <span class="lbl">いま みせている ゆび</span>
+      <span class="lbl" data-t="nowShowing">いま みせている ゆび</span>
       <span class="dbgline" id="fingerDbg"></span>
     </div>
   </section>
 </div>
 
 <section class="screen" id="stickers" hidden>
-  <h1 class="title" style="font-size:clamp(28px,5.5vmin,56px)">シールちょう</h1>
+  <h1 class="title" style="font-size:clamp(28px,5.5vmin,56px)" data-t="book">シールちょう</h1>
   <div class="book" id="book"></div>
-  <button class="big" id="closeStickers">もどる</button>
+  <button class="big" id="closeStickers" data-t="back">もどる</button>
 </section>
 
 <section class="screen" id="done" hidden>
   <h1 class="title" id="doneTitle">よく<br>できました！</h1>
   <div style="font-size:clamp(110px,30vmin,220px);line-height:1" id="doneEmoji">💮</div>
   <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
-    <button class="big" id="again">もういちど</button>
-    <button class="big" id="toMenu" style="background:var(--leaf);box-shadow:0 6px 0 #3b7a37">ほかの あそび</button>
+    <button class="big" id="again" data-t="again">もういちど</button>
+    <button class="big" id="toMenu" style="background:var(--leaf);box-shadow:0 6px 0 #3b7a37" data-t="other">ほかの あそび</button>
   </div>
 </section>
 
 <div class="shade" id="shade" hidden></div>
 <div class="gate" id="gate" hidden role="dialog" aria-label="おうちのかたの確認">
-  <p class="small">おうちのかたへ：こたえを えらんでください</p>
+  <p class="small" data-t="gateAsk">おうちのかたへ：こたえを えらんでください</p>
   <p class="gateQ" id="gateQ">7 × 6 = ?</p>
   <div class="chips" id="gateOpts"></div>
-  <button class="close" id="gateClose">やめる</button>
+  <button class="close" id="gateClose" data-t="cancel">やめる</button>
 </div>
 <aside class="sheet" id="parent" hidden aria-label="おうちのかた用の設定">
   <div class="sheet-in">
-    <h2>おうちのかた用 <button class="close" id="closeSheet">とじる</button></h2>
+    <h2><span data-t="sheetTitle">おうちのかた用</span> <button class="close" id="closeSheet" data-t="close">とじる</button></h2>
     <div class="group">
-      <h3>だんかい</h3>
+      <h3 data-t="hLevel">だんかい</h3>
       <div class="chips" id="stageChips"></div>
     </div>
     <div class="group">
-      <h3>そうさ</h3>
+      <h3 data-t="hCtrl">そうさ</h3>
       <div class="chips">
-        <button class="chip" id="skip">つぎの もんだい</button>
-        <button class="chip" id="mute" aria-pressed="false">おとを ぜんぶ けす</button>
+        <button class="chip" id="skip" data-t="skip">つぎの もんだい</button>
+        <button class="chip" id="mute" aria-pressed="false" data-t="mute">おとを ぜんぶ けす</button>
         <button class="chip" id="bgmBtn" aria-pressed="true">BGM</button>
       </div>
     </div>
     <div class="group">
-      <h3>あそぶ じかん（すぎたら「きょうは ここまで」）</h3>
+      <h3 data-t="hTime">あそぶ じかん（すぎたら「きょうは ここまで」）</h3>
       <div class="chips" id="limitChips">
-        <button class="chip" data-limit="0" aria-pressed="true">なし</button>
-        <button class="chip" data-limit="5" aria-pressed="false">5ふん</button>
-        <button class="chip" data-limit="10" aria-pressed="false">10ぷん</button>
-        <button class="chip" data-limit="15" aria-pressed="false">15ふん</button>
+        <button class="chip" data-limit="0" aria-pressed="true" data-t="none">なし</button>
+        <button class="chip" data-limit="5" aria-pressed="false" data-t="m5">5ふん</button>
+        <button class="chip" data-limit="10" aria-pressed="false" data-t="m10">10ぷん</button>
+        <button class="chip" data-limit="15" aria-pressed="false" data-t="m15">15ふん</button>
       </div>
     </div>
     <div class="group">
-      <h3>カメラ・しらべる</h3>
+      <h3 data-t="hCam">カメラ・しらべる</h3>
       <div class="chips">
-        <button class="chip" id="camBig" aria-pressed="false">カメラを おおきく</button>
-        <button class="chip" id="dbgBtn" aria-pressed="false">デバッグ表示</button>
+        <button class="chip" id="camBig" aria-pressed="false" data-t="camBig">カメラを おおきく</button>
+        <button class="chip" id="dbgBtn" aria-pressed="false" data-t="debug">デバッグ表示</button>
         <button class="chip" id="procBtn">しょり：CPU</button>
       </div>
     </div>
+    <div class="group">
+      <h3>ことば / Language</h3>
+      <div class="chips"><button class="chip" data-lang="ja">日本語</button><button class="chip" data-lang="en">English</button></div>
+    </div>
     <p class="small" id="sheetNote"></p>
-    <p class="small">音声：Open JTalk（HTS voice tohoku-f01 © 東北大学 伊藤・能勢研究室、CC BY 4.0）。効果音とBGMはこのアプリの中で合成しています。<br>版 __VERSION__</p>
-    <p class="small"><a href="about.html" target="_blank" rel="noopener" style="color:var(--apple)">このアプリについて（プライバシー・あそびかた・クレジット）</a></p>
+    <p class="small"><span data-t="credit">声：Open JTalk（HTS voice tohoku-f01 © 東北大学 伊藤・能勢研究室、CC BY 4.0）、英語は Kokoro-82M（Apache-2.0）。効果音とBGMはこのアプリの中で合成しています。</span><br><span data-t="ver">版</span> __VERSION__</p>
+    <p class="small"><a id="aboutLink" href="about.html" target="_blank" rel="noopener" style="color:var(--apple)" data-t="about">このアプリについて（プライバシー・あそびかた・クレジット）</a></p>
   </div>
 </aside>
 
 <video id="video" playsinline muted hidden></video>
 <div class="hanamaru" id="maru" hidden><div class="cel-in"><span id="celEmoji">💮</span><b id="celLabel"></b></div></div>
-<div class="stickerPop" id="stickerPop" hidden><div><span id="stickerNew">🐶</span><b>シールを もらったよ！</b></div></div>
+<div class="stickerPop" id="stickerPop" hidden><div><span id="stickerNew">🐶</span><b data-t="gotSticker">シールを もらったよ！</b></div></div>
 
 <script>
-/* 指示音声（Open JTalk + HTS voice tohoku-f01 © 東北大学、CC BY 4.0）。mp3 を base64 で埋め込み */
+/* 指示音声。日本語：Open JTalk + HTS voice tohoku-f01 © 東北大学（CC BY 4.0）、英語：Kokoro-82M（Apache-2.0）。mp3 を base64 で埋め込み */
 window.VOICE_DATA = /*VOICE_DATA*/{};
+window.VOICE_DATA_EN = /*VOICE_DATA_EN*/{};
 </script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
   const PER_STAGE = 3;          // 各段階の正解数
   const HOLD_MS = 1000;         // 同じ形を保つ時間
-  const NUM = ['ぜろ','いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう','じゅういち','じゅうに'];
+  const NUM_JA = ['ぜろ','いち','に','さん','よん','ご','ろく','なな','はち','きゅう','じゅう','じゅういち','じゅうに'];
+  const NUM_EN = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
   const HOUR = ['', 'いちじ','にじ','さんじ','よじ','ごじ','ろくじ','しちじ','はちじ','くじ','じゅうじ','じゅういちじ','じゅうにじ'];
+
+  // ---------- ことば（日本語 / English） ----------
+  // 決め方：URL の ?lang= → 前回えらんだもの → 端末の言語（日本語以外は英語）。
+  // 画面の文言は data-t の要素を、英語のときだけ EN に置き換える（日本語は HTML に書いたものを使う）。
+  // 動きの中で出す文言と声は V(日本語, 英語) で選ぶ。声のキーは日本語と英語で別の組み立てになることがある
+  let LANG = 'ja';
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    LANG = q === 'en' || q === 'ja' ? q : (localStorage.getItem('yubi-lang') || ((navigator.language || 'ja').toLowerCase().startsWith('ja') ? 'ja' : 'en'));
+  } catch(e){}
+  if (LANG !== 'en') LANG = 'ja';
+  const V = (ja, en) => LANG === 'en' ? en : ja;
+  const tr = x => Array.isArray(x) ? V(x[0], x[1]) : x;
+  const NUM = new Proxy([], { get: (_, i) => V(NUM_JA, NUM_EN)[i] });
+  const EN = {
+    title: 'Move &amp;<br>Learn <em>🍎</em>',
+    sub: 'Count, tell time, and make shapes by moving your fingers and body',
+    note: '<b>For parents</b><br>This app reads the shape of hands and bodies through the camera. <b>Camera video is processed only on this device. Nothing is sent or saved.</b> Stand the tablet up so that hands and body are in view.<br>The tracking program and models come with this app, so it does not talk to any outside service while playing (about 25 MB loads the first time; Wi-Fi recommended).',
+    go: 'Start', ver: 'ver.', menuTitle: 'What shall we play?',
+    n_yubi: 'Finger Count', w_yubi: 'Hold up a finger for each apple',
+    n_tokei: 'Body Clock', w_tokei: 'Make the clock hands with your arms',
+    n_katachi: 'Copy the Shape', w_katachi: 'Make the same shape with your body',
+    n_free: 'Free Counting', w_free: 'Hold up fingers and apples appear',
+    book: 'Sticker Book', back: 'Back', parents: 'Parents', nowShowing: 'Fingers you are showing',
+    again: 'Play again', other: 'Other games', gateAsk: 'For parents: choose the answer', cancel: 'Cancel',
+    sheetTitle: 'For parents', close: 'Close', hLevel: 'Level', hCtrl: 'Controls', skip: 'Next question', mute: 'Mute all sounds',
+    hTime: 'Play time (then "That\'s all for today")', none: 'Off', m5: '5 min', m10: '10 min', m15: '15 min',
+    hCam: 'Camera &amp; tools', camBig: 'Bigger camera', debug: 'Debug view',
+    credit: 'Voices: Japanese by Open JTalk (HTS voice tohoku-f01 © Tohoku University, Ito-Nose Lab, CC BY 4.0); English by Kokoro-82M (Apache-2.0). Sound effects and music are synthesized in the app.',
+    about: 'About this app (privacy, how to play, credits)', gotSticker: 'You got a sticker!'
+  };
+  const JA = {};
+  document.querySelectorAll('[data-t]').forEach(el => { if (!(el.dataset.t in JA)) JA[el.dataset.t] = el.innerHTML; });
 
   // ---------- ゲームの定義 ----------
   const GAMES = {
     yubi: {
       detector: 'hand', hintMs: 3000,
-      stages: [{min:1,max:3,label:'1〜3'}, {min:4,max:5,label:'4〜5'}, {min:6,max:10,label:'6〜10（りょうて）'}, {add:true,label:'たしざん'}],
-      note: '両手で数えるとき（6〜10）は、両手と手首が画面に入るように少し離れてください。'
+      stages: [{min:1,max:3,label:'1〜3'}, {min:4,max:5,label:'4〜5'}, {min:6,max:10,label:['6〜10（りょうて）', '6–10 (both hands)']}, {add:true,label:['たしざん', 'Adding']}],
+      note: ['両手で数えるとき（6〜10）は、両手と手首が画面に入るように少し離れてください。', 'For 6–10 (both hands), step back a little so both hands and wrists are in view.']
     },
     katachi: {
       detector: 'pose', hintMs: 5000,
-      stages: [{shapes:['banzai','hikouki','bou'],label:'3つの かたち'}, {shapes:['banzai','hikouki','bou','maru'],label:'4つの かたち'}],
-      note: '上半身が画面に入るように、タブレットから1.5〜2mほど離れてください。おてほんは鏡のように同じ向きで真似すれば大丈夫です。'
+      stages: [{shapes:['banzai','hikouki','bou'],label:['3つの かたち', '3 shapes']}, {shapes:['banzai','hikouki','bou','maru'],label:['4つの かたち', '4 shapes']}],
+      note: ['上半身が画面に入るように、タブレットから1.5〜2mほど離れてください。おてほんは鏡のように同じ向きで真似すれば大丈夫です。', 'Stand about 1.5–2 m (5–6 ft) from the tablet so the upper body is in view. Copying the picture like a mirror is fine.']
     },
     free: {
       detector: 'hand', hintMs: Infinity,
-      stages: [{label:'じゆう'}],
-      note: '正解も不正解もない遊びです。指を立てた数だけ、りんごが出てきます。ちがう数を5つ見せるとシールがもらえます。'
+      stages: [{label:['じゆう', 'Free']}],
+      note: ['正解も不正解もない遊びです。指を立てた数だけ、りんごが出てきます。ちがう数を5つ見せるとシールがもらえます。', 'No right or wrong answers here. Apples appear for each finger held up. Showing 5 different numbers earns a sticker.']
     },
     tokei: {
       detector: 'pose', hintMs: 5000,
-      stages: [{hours:[12,3,6,9],label:'12・3・6・9じ'}, {hours:[1,2,3,4,5,6,7,8,9,10,11,12],label:'1〜12じ'}],
-      note: '上半身（できれば腰まで）が画面に入るように、タブレットから1.5〜2mほど離れてください。どちらの腕を長い針にしてもかまいません。'
+      stages: [{hours:[12,3,6,9],label:['12・3・6・9じ', '12, 3, 6, 9']}, {hours:[1,2,3,4,5,6,7,8,9,10,11,12],label:['1〜12じ', '1–12']}],
+      note: ['上半身（できれば腰まで）が画面に入るように、タブレットから1.5〜2mほど離れてください。どちらの腕を長い針にしてもかまいません。', 'Stand about 1.5–2 m (5–6 ft) from the tablet so the upper body (ideally down to the waist) is in view. Either arm can be the long hand.']
     }
   };
   let game = 'yubi';
@@ -427,7 +470,7 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   // 声：あらかじめ作った音声（Open JTalk + tohoku-f01）をつなげて話す。読めない時は端末の読み上げに切り替え
   // 効果音とBGM：ブラウザの中で合成する（ファイルなし）
   let ac = null, out = null, voiceBus = null, sfxBus = null, bgmBus = null, bgmDuck = null;
-  const buffers = {};
+  const buffers = { ja: {}, en: {} };
   let bgmOn = true, talkId = 0, talking = false, activeSrc = [];
   try { bgmOn = localStorage.getItem('yubi-bgm') !== 'off'; } catch(e){}
   function audioInit(){
@@ -444,12 +487,11 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
     // 無音を一瞬鳴らして、iPad の音の制限を解く
     const b = ac.createBuffer(1, 1, 22050), s0 = ac.createBufferSource(); s0.buffer = b; s0.connect(ac.destination); s0.start(0);
     // 声をデコード（小さいので一度に）
-    const V = window.VOICE_DATA || {};
-    Object.keys(V).forEach(k => {
-      const bin = Uint8Array.from(atob(V[k]), c => c.charCodeAt(0)).buffer;
-      const done = buf => { buffers[k] = buf; };
+    [['ja', window.VOICE_DATA || {}], ['en', window.VOICE_DATA_EN || {}]].forEach(([lang, data]) => Object.keys(data).forEach(k => {
+      const bin = Uint8Array.from(atob(data[k]), c => c.charCodeAt(0)).buffer;
+      const done = buf => { buffers[lang][k] = buf; };
       try { const pr = ac.decodeAudioData(bin, done, () => {}); if (pr && pr.then) pr.then(done).catch(() => {}); } catch(e){}
-    });
+    }));
     if (bgmOn) bgmStart();
     document.addEventListener('visibilitychange', () => {
       if (!ac) return;
@@ -470,13 +512,14 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
     if (muted) return Promise.resolve();
     keys = keys.filter(Boolean);
     (window.__talkLog = window.__talkLog || []).push(keys.join('+'));   // 検証用の記録
-    if (!ac || !keys.every(k => buffers[k])) return sayTTS(fallbackText);
+    const B = buffers[LANG];
+    if (!ac || !keys.every(k => B[k])) return sayTTS(fallbackText);
     stopTalk();
     const id = ++talkId; talking = true; duck(true);
     let t = ac.currentTime + 0.05;
     keys.forEach(k => {
-      const src = ac.createBufferSource(); src.buffer = buffers[k]; src.connect(voiceBus); src.start(t);
-      activeSrc.push(src); t += buffers[k].duration + 0.06;
+      const src = ac.createBufferSource(); src.buffer = B[k]; src.connect(voiceBus); src.start(t);
+      activeSrc.push(src); t += B[k].duration + 0.06;
     });
     return new Promise(res => setTimeout(() => {
       if (id === talkId){ talking = false; activeSrc = []; duck(false); }
@@ -489,7 +532,7 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
       try {
         speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ja-JP'; u.rate = 0.9; u.pitch = 1.2;
+        u.lang = V('ja-JP', 'en-US'); u.rate = 0.9; u.pitch = 1.2;
         u.onend = u.onerror = () => res();
         speechSynthesis.speak(u);
         setTimeout(res, 5000);
@@ -577,7 +620,7 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   }
   // 検証用の入口（アプリの動作には使わない）
   window.__audio = {
-    state: () => ({ ctx: ac && ac.state, decoded: Object.keys(buffers).length, total: Object.keys(window.VOICE_DATA || {}).length, bgm: !!bgmTimer }),
+    state: () => ({ ctx: ac && ac.state, lang: LANG, decoded: Object.keys(buffers[LANG]).length, total: Object.keys(V(window.VOICE_DATA, window.VOICE_DATA_EN) || {}).length, bgm: !!bgmTimer }),
     tap: () => { const d = ac.createMediaStreamDestination(); out.connect(d); return d.stream; },
     sfx, talk: k => talk(k)
   };
@@ -666,7 +709,7 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   // ==KATACHI-LOGIC-START==
   // ---------- 体のかたちを読む ----------
   // 角度は鏡写しの画面で真上＝0度・時計回り。本人の左腕は画面の左にあり、まっすぐ横に出すと270度
-  const SHAPES = { banzai:{name:'ばんざい', sym:'Y'}, hikouki:{name:'ひこうき', sym:'T'}, bou:{name:'ぼう', sym:'I'}, maru:{name:'まる', sym:'○'} };
+  const SHAPES = { banzai:{name:'ばんざい', en:'Hooray', sym:'Y'}, hikouki:{name:'ひこうき', en:'Airplane', sym:'T'}, bou:{name:'ぼう', en:'Pencil', sym:'I'}, maru:{name:'まる', en:'Circle', sym:'○'} };
   function readShape(lm, W, H){
     const [A, B] = readClock(lm, W, H);               // A = 本人の左腕、B = 右腕
     const P2 = i => ({ x: (1 - lm[i].x) * W, y: lm[i].y * H });
@@ -722,32 +765,36 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
       }
       target = t;
       renderApples();
-      const q = parts ? `あかい りんごが ${NUM[parts[0]]}こ と、みどりの りんごが ${NUM[parts[1]]}こ。ぜんぶで いくつ？ ゆびで みせてね`
-                      : (t > 5 ? 'りんごは いくつ？ りょうての ゆびで みせてね' : 'りんごは いくつ？ ゆびで みせてね');
-      $('prompt').textContent = parts ? 'ぜんぶで いくつ？' : 'りんごは いくつ？';
-      talk(parts ? ['add_red', `ko${parts[0]}`, 'add_to', 'add_green', `ko${parts[1]}`, 'add_q'] : [t > 5 ? 'q_yubi_both' : 'q_yubi'], q);
+      const q = parts ? V(`あかい りんごが ${NUM[parts[0]]}こ と、みどりの りんごが ${NUM[parts[1]]}こ。ぜんぶで いくつ？ ゆびで みせてね`, `${NUM[parts[0]]} red and ${NUM[parts[1]]} green apples. How many in all?`)
+                      : (t > 5 ? V('りんごは いくつ？ りょうての ゆびで みせてね', 'How many apples? Use both hands to show me!') : V('りんごは いくつ？ ゆびで みせてね', 'How many apples? Show me with your fingers!'));
+      talk(parts ? V(['add_red', `ko${parts[0]}`, 'add_to', 'add_green', `ko${parts[1]}`, 'add_q'], [`add_${parts[0]}_${parts[1]}`]) : [t > 5 ? 'q_yubi_both' : 'q_yubi'], q);
     } else if (game === 'free'){
       target = null; parts = null; freeN = -1; freeSpoken = 0;
-      $('prompt').textContent = 'ゆびを みせてね';
       renderFree(0, false);
-      talk(['free_intro'], 'ゆびを みせてね。いくつ かな？');
+      talk(['free_intro'], V('ゆびを みせてね。いくつ かな？', 'Show me your fingers! How many?'));
     } else if (game === 'katachi'){
       let k;
       do { k = s.shapes[rnd(0, s.shapes.length - 1)]; } while (k === shape && s.shapes.length > 1);
       shape = k;
       $('kFig').innerHTML = figureSVG(k);
-      $('kLabel').innerHTML = `${SHAPES[k].name}<small>の かたち</small>`;
-      talk([`k_${k}`, 'q_katachi'], `${SHAPES[k].name} の かたちを まねしてね`);
+      talk(V([`k_${k}`, 'q_katachi'], [`kq_${k}`]), V(`${SHAPES[k].name} の かたちを まねしてね`, `Copy the ${SHAPES[k].en.toLowerCase()} shape!`));
     } else {
       let h;
       do { h = s.hours[rnd(0, s.hours.length - 1)]; } while (h === hour && s.hours.length > 1);
       hour = h;
       $('tClock').innerHTML = clockSVG(h);
-      $('tLabel').innerHTML = `${h}じ<small>を つくろう</small>`;
-      talk([`h${h}`, 'q_tokei', firstTokei && 'tokei_first'], `${HOUR[h]} を からだで つくってね。` + (firstTokei ? 'ながい はりは まうえ だよ' : ''));
+      talk(V([`h${h}`, 'q_tokei', firstTokei && 'tokei_first'], [`t${h}`, firstTokei && 'tokei_first']),
+        V(`${HOUR[h]} を からだで つくってね。` + (firstTokei ? 'ながい はりは まうえ だよ' : ''), `Make ${NUM_EN[h]} o'clock with your arms!` + (firstTokei ? ' The long hand points straight up.' : '')));
       firstTokei = false;
     }
-    renderStars();
+    labels(); renderStars();
+  }
+  // 問題の文字（ことばを変えた時は、これだけ書き直す）
+  function labels(){
+    if (game === 'yubi') $('prompt').textContent = parts ? V('ぜんぶで いくつ？', 'How many in all?') : V('りんごは いくつ？', 'How many apples?');
+    else if (game === 'free') $('prompt').textContent = V('ゆびを みせてね', 'Show me your fingers');
+    else if (game === 'katachi' && shape) $('kLabel').innerHTML = V(`${SHAPES[shape].name}<small>の かたち</small>`, `${SHAPES[shape].en}<small>copy the shape</small>`);
+    else if (game === 'tokei' && hour) $('tLabel').innerHTML = V(`${hour}じ<small>を つくろう</small>`, `${hour} o'clock<small>make it with your arms</small>`);
   }
   // 10のわく：5こで1れつ。6こ以上は2れつ目へ（5と いくつ、が見てわかる）
   function renderApples(){
@@ -793,7 +840,7 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   }
   function renderStars(){
     $('dots').innerHTML = Array.from({length: PER_STAGE}, (_, i) => `<i class="${i < correctInStage ? 'on' : ''}"></i>`).join('');
-    $('level').textContent = G().stages[stage].label;
+    $('level').textContent = tr(G().stages[stage].label);
   }
 
   async function hint(){
@@ -807,20 +854,20 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
     if (game === 'tokei'){
       ghost = true;   // 鏡の上に、めざす腕の向きをうすく出す
       sfx.hint();
-      await talk(['hint_tokei_1', `c${hour}`, 'hint_tokei_2'], `ながい はりは まうえ。みじかい はりは ${NUM[hour]} の ほう だよ`);
+      await talk(V(['hint_tokei_1', `c${hour}`, 'hint_tokei_2'], [`ht${hour}`]), V(`ながい はりは まうえ。みじかい はりは ${NUM[hour]} の ほう だよ`, `The long hand points up. The short hand points to ${NUM[hour]}.`));
       return;
     }
     busy = true;
     const apples = [...document.querySelectorAll('.apple')];
     apples.forEach(a => a.classList.add('dim'));
     sfx.hint();
-    await talk(['hint_count'], 'いっしょに かぞえよう');
+    await talk(['hint_count'], V('いっしょに かぞえよう', "Let's count together."));
     for (let i = 0; i < apples.length; i++){
       apples[i].classList.remove('dim'); apples[i].classList.add('lit');
       await talk([`c${i + 1}`], NUM[i + 1]);
       apples[i].classList.remove('lit');
     }
-    await talk([`ko${target}`, 'dane'], `${NUM[target]}こ だね`);
+    await talk(V([`ko${target}`, 'dane'], [`ko${target}`]), V(`${NUM[target]}こ だね`, `${NUM[target]} apples.`));
     busy = false; shownSince = performance.now(); wrongSince = 0;
   }
 
@@ -842,16 +889,16 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   async function correct(){
     busy = true;
     sfx.correct();
-    celebrate(game === 'yubi' ? String(target) : game === 'tokei' ? `${hour}じ` : SHAPES[shape].sym);
+    celebrate(game === 'yubi' ? String(target) : game === 'tokei' ? V(`${hour}じ`, `${hour}:00`) : SHAPES[shape].sym);
     correctInStage++;
     renderStars(); sfx.star();
     const praise = `praise${Math.floor(Math.random() * 5)}`;
-    const keyOf = game === 'yubi' ? `ko${target}` : game === 'tokei' ? `h${hour}` : `k_${shape}`;
-    await talk([praise, keyOf], 'せいかい！');
+    const keyOf = game === 'yubi' ? V(`ko${target}`, `c${target}`) : game === 'tokei' ? `h${hour}` : `k_${shape}`;
+    await talk([praise, keyOf], V('せいかい！', 'Correct!'));
     $('maru').hidden = true;
     if (correctInStage >= PER_STAGE){
       await awardSticker();
-      if (stage < G().stages.length - 1){ setStage(stage + 1); sfx.fanfare(); await talk(['next_stage'], 'つぎの もんだいに すすむよ'); }
+      if (stage < G().stages.length - 1){ setStage(stage + 1); sfx.fanfare(); await talk(['next_stage'], V('つぎの もんだいに すすむよ', "Let's try the next level!")); }
       else { finish(); busy = false; return; }
     }
     newQuestion();
@@ -860,9 +907,9 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
 
   function finish(){
     playing = false;
-    $('doneTitle').innerHTML = 'よく<br>できました！'; $('doneEmoji').textContent = '💮'; $('again').hidden = false;
+    $('doneTitle').innerHTML = V('よく<br>できました！', 'Great<br>job!'); $('doneEmoji').textContent = '💮'; $('again').hidden = false;
     $('done').hidden = false;
-    sfx.done(); talk(['done'], 'よく できました！');
+    sfx.done(); talk(['done'], V('よく できました！', 'Great job! You did it!'));
   }
 
   // ---------- シール帳（端末に保存） ----------
@@ -876,7 +923,7 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
     got.push(pick); saveStickers();
     $('stickerNew').textContent = STICKERS[pick];
     $('stickerPop').hidden = false; sfx.star();
-    await Promise.all([talk(['sticker'], 'シールを もらったよ！'), new Promise(r => setTimeout(r, 2200))]);
+    await Promise.all([talk(['sticker'], V('シールを もらったよ！', 'You got a sticker!')), new Promise(r => setTimeout(r, 2200))]);
     $('stickerPop').hidden = true;
   }
   function renderBook(){
@@ -891,9 +938,9 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   window.__dev = { award: () => awardSticker(), expire: () => { sessionStart = performance.now() - 1e9; }, stickers: () => got.length, game: () => game };   // 検証用
   function timeUp(){
     playing = false; busy = false;
-    $('doneTitle').innerHTML = 'きょうは<br>ここまで！'; $('doneEmoji').textContent = '🌙'; $('again').hidden = true;
+    $('doneTitle').innerHTML = V('きょうは<br>ここまで！', "That's all<br>for today!"); $('doneEmoji').textContent = '🌙'; $('again').hidden = true;
     $('app').hidden = true; $('menu').hidden = true; $('done').hidden = false; openSheet(false);
-    talk(['timeup'], 'きょうは ここまで。また あそぼうね！');
+    talk(['timeup'], V('きょうは ここまで。また あそぼうね！', "That's all for today. Let's play again soon!"));
   }
 
   function setStage(i){
@@ -915,7 +962,7 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
       if (n !== freeN){ renderFree(n, n > freeN); freeN = n; }
       if (held >= 1 && n > 0 && n !== freeSpoken && !talking){
         freeSpoken = n; freeSeen.add(n);
-        talk([`ko${n}`], `${NUM[n]}こ`);
+        talk([`ko${n}`], V(`${NUM[n]}こ`, `${NUM[n]} apples`));
         if (freeSeen.size >= 5 && !freeSticker){ freeSticker = true; busy = true; awardSticker().then(() => { busy = false; }); }
       }
       return;
@@ -926,7 +973,7 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
       const diff = n - target;
       const key = diff === -1 ? 'ato1' : diff === 1 ? 'ooi1' : diff < 0 ? 'motto' : 'ooi';
       fbCount++; lastFb = now;
-      talk([key], diff < 0 ? 'もう すこし' : 'ちょっと おおいよ');
+      talk([key], diff < 0 ? V('もう すこし', 'A little more!') : V('ちょっと おおいよ', 'A few too many!'));
     }
     if (n !== target && n > 0){
       if (!wrongSince) wrongSince = now;
@@ -939,8 +986,8 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   function onClock(lm){
     const now = performance.now();
     if (!lm){
-      clockState = null; shown = null; $('tHold').style.setProperty('--p', 0); camMsg('からだが うつるように はなれてね');
-      if (!noBodySince) noBodySince = now; else if (now - noBodySince > 3000 && playing) guide('step_back', 'からだが うつるように すこし はなれてね');
+      clockState = null; shown = null; $('tHold').style.setProperty('--p', 0); camMsg(V('からだが うつるように はなれてね', 'Step back so I can see you'));
+      if (!noBodySince) noBodySince = now; else if (now - noBodySince > 3000 && playing) guide('step_back', V('からだが うつるように すこし はなれてね', 'Step back a little, so I can see your body.'));
       return;
     }
     noBodySince = 0;
@@ -948,8 +995,8 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
     const j = judgeClock(arms, hour);
     clockState = { arms, j };
     const bent = !arms[0].ok && !arms[1].ok;
-    camMsg(bent ? 'うでを まっすぐ のばしてね' : '');
-    if (bent){ if (!bentSince) bentSince = now; else if (now - bentSince > 3000 && playing) guide('arm_straight', 'うでを まっすぐ のばしてね'); } else bentSince = 0;
+    camMsg(bent ? V('うでを まっすぐ のばしてね', 'Stretch your arms out straight') : '');
+    if (bent){ if (!bentSince) bentSince = now; else if (now - bentSince > 3000 && playing) guide('arm_straight', V('うでを まっすぐ のばしてね', 'Stretch your arms out straight.')); } else bentSince = 0;
     const ok = j.err <= CLOCK_TOL;
     if (ok !== shown){ shown = ok; shownSince = now; if (ok && playing && !busy) sfx.count(6); }
     const held = ok ? Math.min(1, (now - shownSince) / HOLD_MS) : 0;
@@ -966,13 +1013,13 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   function onShape(lm){
     const now = performance.now();
     if (!lm){
-      shapeState = null; shown = null; $('kHold').style.setProperty('--p', 0); camMsg('からだが うつるように はなれてね');
-      if (!noBodySince) noBodySince = now; else if (now - noBodySince > 3000 && playing) guide('step_back', 'からだが うつるように すこし はなれてね');
+      shapeState = null; shown = null; $('kHold').style.setProperty('--p', 0); camMsg(V('からだが うつるように はなれてね', 'Step back so I can see you'));
+      if (!noBodySince) noBodySince = now; else if (now - noBodySince > 3000 && playing) guide('step_back', V('からだが うつるように すこし はなれてね', 'Step back a little, so I can see your body.'));
       return;
     }
     noBodySince = 0;
     shapeState = readShape(lm, imgW, imgH);
-    camMsg(shapeState.m.allVis ? '' : 'うでと てが うつるように してね');
+    camMsg(shapeState.m.allVis ? '' : V('うでと てが うつるように してね', 'Make sure your arms and hands are in view'));
     const ok = shapeState.label === shape;
     if (ok !== shown){ shown = ok; shownSince = now; if (ok && playing && !busy) sfx.count(6); }
     const held = ok ? Math.min(1, (now - shownSince) / HOLD_MS) : 0;
@@ -1173,20 +1220,20 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
     audioInit();  // iPad では最初のタップ中に音を有効にする
     sayTTS(' ');
     try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume && ac.resume(); } catch(e){}
-    if (!window.isSecureContext){ return fail('カメラは https のページでしか使えません。https で公開したURLから開いてください。'); }
-    $('go').disabled = true; $('go').textContent = 'じゅんびちゅう…';
-    const reset = () => { $('go').disabled = false; $('go').textContent = 'はじめる'; };
+    if (!window.isSecureContext){ return fail(V('カメラは https のページでしか使えません。https で公開したURLから開いてください。', 'The camera only works on https pages. Please open this app from an https address.')); }
+    $('go').disabled = true; $('go').textContent = V('じゅんびちゅう…', 'Getting ready…');
+    const reset = () => { $('go').disabled = false; $('go').innerHTML = V(JA.go, EN.go); };
     try {
       vision = await import(TV + '/vision_bundle.mjs');
       fileset = await vision.FilesetResolver.forVisionTasks(TV + '/wasm');
-    } catch(e){ reset(); return fail('読み取りのプログラムを読み込めませんでした。インターネットにつながっているか確かめてください。'); }
+    } catch(e){ reset(); return fail(V('読み取りのプログラムを読み込めませんでした。インターネットにつながっているか確かめてください。', 'Could not load the tracking program. Please check your internet connection.')); }
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-    } catch(e){ reset(); return fail('カメラを使えませんでした。ブラウザの設定でカメラを「許可」にしてから、もう一度押してください。'); }
+    } catch(e){ reset(); return fail(V('カメラを使えませんでした。ブラウザの設定でカメラを「許可」にしてから、もう一度押してください。', 'Could not use the camera. Please allow camera access in your browser settings, then tap again.')); }
     const video = $('video');
     video.srcObject = stream; await video.play();
     $('start').hidden = true; $('menu').hidden = false; sessionStart = performance.now();
-    setTimeout(() => talk(['welcome'], 'いっしょに あそぼう！ なにで あそぶ？'), 300);
+    setTimeout(() => talk(['welcome'], V('いっしょに あそぼう！ なにで あそぶ？', "Let's play together! What do you want to play?")), 300);
     let lastT = -1;
     const loop = () => {
       if (playing && video.readyState >= 2 && video.currentTime !== lastT){
@@ -1207,22 +1254,40 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
     const kind = G().detector;
     if (!detectors[kind]){
       const label = btn.querySelector('.name'), orig = label.textContent;
-      label.textContent = 'じゅんびちゅう…'; btn.disabled = true;
+      label.textContent = V('じゅんびちゅう…', 'Getting ready…'); btn.disabled = true;
       try { await makeDetector(kind); }
       catch(e){ label.textContent = orig; btn.disabled = false;
-        return fail('読み取りのモデルを読み込めませんでした。インターネットにつながっているか確かめてください。（詳細：' + String(e && e.message || e).slice(0, 120) + '）', 'menuErr'); }
+        return fail(V('読み取りのモデルを読み込めませんでした。インターネットにつながっているか確かめてください。（詳細：', 'Could not load the tracking model. Please check your internet connection. (Details: ') + String(e && e.message || e).slice(0, 120) + V('）', ')'), 'menuErr'); }
       label.textContent = orig; btn.disabled = false;
     }
     const B = document.body.classList;
     B.toggle('g-yubi', game === 'yubi' || game === 'free'); B.toggle('g-free', game === 'free');
     B.toggle('g-tokei', game === 'tokei'); B.toggle('g-katachi', game === 'katachi'); B.toggle('g-pose', G().detector === 'pose');
     freeSeen = new Set(); freeSticker = false;
-    $('stageChips').innerHTML = G().stages.map((s, i) => `<button class="chip" data-stage="${i}" aria-pressed="${i === 0}">${s.label}</button>`).join('');
-    $('sheetNote').textContent = G().note;
     view.width = 0; camMsg('');
-    setStage(0); target = 0; hour = 0;
+    setStage(0); target = 0; hour = 0; gameChrome();
     $('menu').hidden = true; $('done').hidden = true; $('app').hidden = false; playing = true;
     newQuestion();
+  }
+  // 段階のボタンと保護者向けの注意（ことばを変えた時も作り直す）
+  function gameChrome(){
+    $('stageChips').innerHTML = G().stages.map((s, i) => `<button class="chip" data-stage="${i}" aria-pressed="${i === stage}">${tr(s.label)}</button>`).join('');
+    $('sheetNote').textContent = tr(G().note);
+  }
+  function applyLang(){
+    document.documentElement.lang = LANG;
+    document.title = V('からだでまなぼう', 'Move & Learn');
+    document.querySelectorAll('[data-t]').forEach(el => { const k = el.dataset.t; el.innerHTML = LANG === 'en' && EN[k] != null ? EN[k] : JA[k]; });
+    document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === LANG)));
+    $('aboutLink').href = 'about.html?lang=' + LANG;
+    $('procBtn').textContent = V('しょり：', 'Processing: ') + delegate;
+  }
+  function setLang(l){
+    if (l === LANG) return;
+    LANG = l; try { localStorage.setItem('yubi-lang', l); } catch(e){}
+    stopTalk(); try { speechSynthesis.cancel(); } catch(e){}
+    applyLang(); gameChrome(); renderStars(); labels();
+    if (playing && !busy) newQuestion();   // 遊んでいる途中なら、新しいことばで出し直す（ヒントの最中は文字だけ）
   }
   function toMenu(){
     playing = false; busy = false; ghost = false; stopTalk();
@@ -1260,10 +1325,10 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
   $('procBtn').addEventListener('click', async e => {
     if (!vision) return;
     delegate = delegate === 'CPU' ? 'GPU' : 'CPU';
-    e.currentTarget.textContent = 'しょり：' + delegate;
+    e.currentTarget.textContent = V('しょり：', 'Processing: ') + delegate;
     const kinds = Object.keys(detectors).filter(k => detectors[k]);
     try { for (const k of kinds) await makeDetector(k); }
-    catch(err){ errText = 'GPUを使えません'; delegate = 'CPU'; e.currentTarget.textContent = 'しょり：CPU'; for (const k of kinds) await makeDetector(k); }
+    catch(err){ errText = 'GPUを使えません'; delegate = 'CPU'; e.currentTarget.textContent = V('しょり：', 'Processing: ') + 'CPU'; for (const k of kinds) await makeDetector(k); }
   });
   $('dbgBtn').addEventListener('click', e => {
     debugOn = !debugOn; document.body.classList.toggle('debug', debugOn);
@@ -1290,6 +1355,9 @@ window.VOICE_DATA = /*VOICE_DATA*/{};
     try { localStorage.setItem('yubi-bgm', bgmOn ? 'on' : 'off'); } catch(err){}
     if (bgmOn) bgmStart(); else bgmStop();
   });
+  // ことばの切り替え（はじめの画面と「おうちのかた」）
+  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+  applyLang();
   // ボタンを押した時の小さな音
   document.addEventListener('click', e => { if (e.target.closest('button') && ac) sfx.tap(); }, true);
   $('stageChips').addEventListener('click', e => {
